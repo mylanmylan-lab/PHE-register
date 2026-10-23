@@ -1,0 +1,158 @@
+{
+  "format": "PHE-Register",
+  "schema": 1,
+  "events": [
+    {
+      "id": "demo-seed",
+      "actor": "Fiktívne údaje",
+      "at": "2026-09-01T08:00:00.000Z",
+      "command": {
+        "op": "class.create",
+        "id": "demo-7a",
+        "name": "7. A",
+        "students": [
+          {
+            "id": "demo-1",
+            "firstName": "Adam",
+            "lastName": "Bielik",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-2",
+            "firstName": "Daniel",
+            "lastName": "Dúha",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-3",
+            "firstName": "Filip",
+            "lastName": "Horský",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-4",
+            "firstName": "Jakub",
+            "lastName": "Javor",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-5",
+            "firstName": "Leo",
+            "lastName": "Kamenár",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-6",
+            "firstName": "Lukáš",
+            "lastName": "Lipový",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-7",
+            "firstName": "Matej",
+            "lastName": "Makovec",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-8",
+            "firstName": "Oliver",
+            "lastName": "Oblačný",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-9",
+            "firstName": "Samuel",
+            "lastName": "Polárny",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-10",
+            "firstName": "Tomáš",
+            "lastName": "Zelený",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-11",
+            "firstName": "Adela",
+            "lastName": "Brezová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-12",
+            "firstName": "Barbora",
+            "lastName": "Čerešňová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-13",
+            "firstName": "Ema",
+            "lastName": "Dúhová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-14",
+            "firstName": "Hana",
+            "lastName": "Hviezdna",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-15",
+            "firstName": "Laura",
+            "lastName": "Javorová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-16",
+            "firstName": "Lea",
+            "lastName": "Lúčová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-17",
+            "firstName": "Nina",
+            "lastName": "Makovská",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-18",
+            "firstName": "Sofia",
+            "lastName": "Oblačná",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-19",
+            "firstName": "Tamara",
+            "lastName": "Slnečná",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-20",
+            "firstName": "Zora",
+            "lastName": "Zelená",
+            "group": "girls",
+            "active": true
+          }
+        ]
+      }
+    }
+  ]
+}

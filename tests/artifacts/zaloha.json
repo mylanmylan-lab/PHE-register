@@ -1,0 +1,343 @@
+{
+  "format": "PHE-Register",
+  "schema": 1,
+  "events": [
+    {
+      "id": "demo-seed",
+      "actor": "Fiktívne údaje",
+      "at": "2026-09-01T08:00:00.000Z",
+      "command": {
+        "op": "class.create",
+        "id": "demo-7a",
+        "name": "7. A",
+        "students": [
+          {
+            "id": "demo-1",
+            "firstName": "Adam",
+            "lastName": "Bielik",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-2",
+            "firstName": "Daniel",
+            "lastName": "Dúha",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-3",
+            "firstName": "Filip",
+            "lastName": "Horský",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-4",
+            "firstName": "Jakub",
+            "lastName": "Javor",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-5",
+            "firstName": "Leo",
+            "lastName": "Kamenár",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-6",
+            "firstName": "Lukáš",
+            "lastName": "Lipový",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-7",
+            "firstName": "Matej",
+            "lastName": "Makovec",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-8",
+            "firstName": "Oliver",
+            "lastName": "Oblačný",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-9",
+            "firstName": "Samuel",
+            "lastName": "Polárny",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-10",
+            "firstName": "Tomáš",
+            "lastName": "Zelený",
+            "group": "boys",
+            "active": true
+          },
+          {
+            "id": "demo-11",
+            "firstName": "Adela",
+            "lastName": "Brezová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-12",
+            "firstName": "Barbora",
+            "lastName": "Čerešňová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-13",
+            "firstName": "Ema",
+            "lastName": "Dúhová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-14",
+            "firstName": "Hana",
+            "lastName": "Hviezdna",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-15",
+            "firstName": "Laura",
+            "lastName": "Javorová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-16",
+            "firstName": "Lea",
+            "lastName": "Lúčová",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-17",
+            "firstName": "Nina",
+            "lastName": "Makovská",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-18",
+            "firstName": "Sofia",
+            "lastName": "Oblačná",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-19",
+            "firstName": "Tamara",
+            "lastName": "Slnečná",
+            "group": "girls",
+            "active": true
+          },
+          {
+            "id": "demo-20",
+            "firstName": "Zora",
+            "lastName": "Zelená",
+            "group": "girls",
+            "active": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "ada30b62-44f0-4f7b-8e2d-2ad92a84d433",
+      "at": "2026-10-23T15:58:14.307Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "lesson.create",
+        "id": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "classId": "demo-7a",
+        "expectedClass": 1,
+        "date": "2026-10-23",
+        "topic": ""
+      }
+    },
+    {
+      "id": "70f97b0a-4ed2-41c4-a264-d32750d7081c",
+      "at": "2026-10-23T15:58:14.439Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-1",
+        "expected": 1,
+        "status": "A"
+      }
+    },
+    {
+      "id": "f7422f59-a029-4aec-8ee1-e7c20aced3f3",
+      "at": "2026-10-23T15:58:14.628Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-2",
+        "expected": 1,
+        "status": "!"
+      }
+    },
+    {
+      "id": "2dccdf61-7215-4d72-af05-14dac77f7d53",
+      "at": "2026-10-23T15:58:14.756Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "case.resolve",
+        "id": "f7422f59-a029-4aec-8ee1-e7c20aced3f3",
+        "expected": 1,
+        "expectedRecord": 2,
+        "resolution": "Ep"
+      }
+    },
+    {
+      "id": "3af67250-b303-43b2-b44e-4f615d09c186",
+      "at": "2026-10-23T15:58:14.889Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-3",
+        "expected": 1,
+        "status": "Ed"
+      }
+    },
+    {
+      "id": "1bd41105-fad0-4854-8ba3-9a01365d20d0",
+      "at": "2026-10-23T15:58:14.989Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-4",
+        "expected": 1,
+        "status": "–"
+      }
+    },
+    {
+      "id": "bd73dce7-2c8f-4091-8e8d-8b13201a8a9d",
+      "at": "2026-10-23T15:58:15.089Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-12",
+        "expected": 1,
+        "status": "!"
+      }
+    },
+    {
+      "id": "7ba86ac9-8a07-482c-8fc7-6d12583725d1",
+      "at": "2026-10-23T15:58:15.239Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "lesson.create",
+        "id": "2ff401c0-e5cb-434d-b41f-b5263f74b99d",
+        "classId": "demo-7a",
+        "expectedClass": 1,
+        "date": "2026-10-23",
+        "topic": ""
+      }
+    },
+    {
+      "id": "cf21d852-9ce5-438d-9f30-11f3f9863df3",
+      "at": "2026-10-23T15:58:15.306Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "lesson.update",
+        "id": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "expected": 1,
+        "date": "2026-10-23",
+        "topic": "Loptové hry & koordinácia",
+        "finished": false
+      }
+    },
+    {
+      "id": "e609ed0b-2fe2-4a3b-9714-769e9a9837ee",
+      "at": "2026-10-23T15:58:15.372Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "lesson.update",
+        "id": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "expected": 2,
+        "date": "2026-10-23",
+        "topic": "Loptové hry & koordinácia",
+        "finished": true
+      }
+    },
+    {
+      "id": "0c88ace5-7066-4191-ac3d-8378e29d8aff",
+      "at": "2026-10-23T15:58:15.455Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "case.resolve",
+        "id": "bd73dce7-2c8f-4091-8e8d-8b13201a8a9d",
+        "expected": 1,
+        "expectedRecord": 2,
+        "resolution": "without"
+      }
+    },
+    {
+      "id": "e185a1a1-a0ad-4a20-8143-c7f14d6075e4",
+      "at": "2026-10-23T15:58:15.555Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "lesson.update",
+        "id": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "expected": 3,
+        "date": "2026-10-23",
+        "topic": "Loptové hry & koordinácia",
+        "finished": false
+      }
+    },
+    {
+      "id": "605c04af-1d1a-4be8-a688-b6689c993fb5",
+      "at": "2026-10-23T15:58:15.724Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-5",
+        "expected": 1,
+        "status": "A"
+      }
+    },
+    {
+      "id": "423393ec-ecae-4e11-98df-ef1a804abf0a",
+      "at": "2026-10-23T15:58:15.731Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-7",
+        "expected": 1,
+        "status": "Ep"
+      }
+    },
+    {
+      "id": "3a91e7cc-9e05-418e-8971-e1d09809b791",
+      "at": "2026-10-23T15:58:15.736Z",
+      "actor": "Lokálny učiteľ",
+      "command": {
+        "op": "record.set",
+        "lessonId": "59a78a8a-7239-4d75-856a-8f1fea133441",
+        "studentId": "demo-6",
+        "expected": 1,
+        "status": "A"
+      }
+    }
+  ]
+}

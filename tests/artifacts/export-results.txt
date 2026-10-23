@@ -1,0 +1,3 @@
+PASS XLSX: ZIP CRC + XML + openpyxl, 21 riadkov × 4 stĺpce; diakritika, A a ✓ zachované.
+PASS CSV: 21 riadkov × 4 stĺpce, UTF-8 BOM, bodkočiarka, diakritika a značky zachované.
+PASS PDF: vytvorený Chromium tlačou, extrakcia textu potvrdila mená, diakritiku a značky.
