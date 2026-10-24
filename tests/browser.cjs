@@ -1,7 +1,7 @@
 /* Optional browser QA: npm install --no-save playwright, then npx playwright install chromium.
    Start npm start in another terminal. No runtime dependency is needed by the app. */
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const out=path.resolve(__dirname,'artifacts');fs.mkdirSync(out,{recursive:true});
+const out=path.resolve(process.env.PHE_TEST_ARTIFACTS||path.join(__dirname,'artifacts'));fs.mkdirSync(out,{recursive:true});
 const logs=[];const pass=s=>{logs.push('PASS '+s);console.log('PASS '+s);};
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.PHE_CHROMIUM?{executablePath:process.env.PHE_CHROMIUM}:{}),args:['--no-sandbox']});

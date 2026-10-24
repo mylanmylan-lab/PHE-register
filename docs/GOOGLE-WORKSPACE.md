@@ -2,6 +2,18 @@
 
 Stav: **backend implementovaný, testovaný lokálne so simulovanými Google službami; v školskom prostredí nenasadený a integračne neoverený.** Žiadna doména, účet ani Google tabuľka neboli v tejto úlohe pripojené. Nasadenie nasleduje až po schválení školy a konfigurácii.
 
+## Rozšírenie 1.1 – osobný rozvrh
+
+Rozvrh používa ten istý hárok `Events`, existujúci zámok a zálohu `schema: 1`. Pribudli príkazy `schedule.upsert` (nová položka s `expected: 0` alebo úprava s aktuálnou verziou) a `schedule.delete`. V pamäti sa z udalostí odvodí voliteľné pole `schedule`; staré dáta ho nepotrebujú a nevykonáva sa deštruktívna migrácia.
+
+Položka obsahuje `id`, `owner`, `day` (1–5), `start`, `end` (HH:MM), `classId`, `version`, `deleted`. Vlastníka určuje výhradne server z autora udalosti. Telo klientského príkazu vlastníka neprijíma. Učiteľ môže meniť iba vlastné položky; tie sú oddelené od spoločnej evidencie tried. Časy jedného učiteľa v rovnaký deň sa nesmú prekrývať. Odstránenie ponechá verziu a príznak `deleted`, takže oneskorený zápis položku potichu neobnoví. Pôvodné hodnoty ostávajú v histórii.
+
+API v úspešnej odpovedi pridáva serverové pole `actor`, aby klient vybral rozvrh prihláseného učiteľa. Pri budúcej aktualizácii školského prostredia treba spoločne aktualizovať **Code.gs, Domain.gs a Index.html**. Samotný predvýber triedy nevolá zápisové API a nevytvára hodinu. V školskom režime sa cudzia úprava rozvrhu načíta existujúcim tlačidlom Obnoviť alebo pri návrate do aplikácie; nejde o živý prenos.
+
+Zálohy 1.0 sú naďalej čitateľné. Nové zálohy s udalosťami rozvrhu vyžadujú verziu 1.1 alebo novšiu. Obnovovací nástroj zachová aj rozvrhy a ich historických vlastníkov. Lokálny rozvrh má autora „Lokálny učiteľ“; jeho priradenie ku konkrétnemu školskému účtu pri budúcom importe vyžaduje výslovné mapovanie správcom. Automatické prepisovanie vlastníkov nie je implementované.
+
+Posledná manuálna trieda sa pamätá na zariadení; ochrana otvorenej hodiny je viazaná na kartu prehliadača. Tieto dočasné voľby rozhrania sa neposielajú ostatným učiteľom. Údaje hodín ani ich dátumy sa predvýberom rozvrhu nemenia. Reálnu školskú identitu a synchronizáciu treba naďalej overiť podľa akceptačného postupu nižšie.
+
 ## Architektúra
 
 ```text

@@ -2,6 +2,7 @@
   'use strict';
   const uuid=()=>crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);
   class LocalStore {
+    constructor() {this.actor='Lokálny učiteľ';}
     async init() {
       this.db=await new Promise((resolve,reject)=>{const r=indexedDB.open('phe-register-v1',1); r.onupgradeneeded=()=>r.result.createObjectStore('data'); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); r.onblocked=()=>reject(new Error('Zatvorte ostatné karty aplikácie.'));});
       this.db.onversionchange=()=>this.db.close();
@@ -23,7 +24,7 @@
     }
   }
   class GoogleStore {
-    call(action,payload={}) { return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(r=>{if(r.ok) resolve(r.state);else {const e=new Error(r.message);e.code=r.code;reject(e);}}).withFailureHandler(()=>reject(new Error('Spojenie so školským serverom zlyhalo. Obnovte údaje; server mohol zmenu uložiť.'))).api({action,...payload})); }
+    call(action,payload={}) { return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(r=>{if(r.ok) {this.actor=r.actor;resolve(r.state);}else {const e=new Error(r.message);e.code=r.code;reject(e);}}).withFailureHandler(()=>reject(new Error('Spojenie so školským serverom zlyhalo. Obnovte údaje; server mohol zmenu uložiť.'))).api({action,...payload})); }
     init() {return this.read();} read() {return this.call('read');}
     command(command,requestId=uuid()) {return this.call('command',{command,requestId});}
   }

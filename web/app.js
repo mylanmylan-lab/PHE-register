@@ -4,9 +4,12 @@
   const remote=typeof google!=='undefined' && google.script && google.script.run;
   const store=remote?new PHEStore.GoogleStore():new PHEStore.LocalStore();
   let state,view='lesson',classId,lessonId,expanded=null,historyFor=null,busy=false,saveText='',saveError=false,pendingBackup=null,search='';
+  const T=PHETimetable;
+  let manualOverride=false,historyPinned=false,dirty=false,lastManualClassId=null,autoSlotKey=null,selectionReason='fallback',scheduleDraft=null,storageWarning=false;
   let [from,to]=PHE.semester(PHE.today());
   const icons={lesson:'M5 4h14v17H5z M9 2v4 M15 2v4 M8 11h8 M8 15h5',matrix:'M3 4h18v16H3z M3 10h18 M9 4v16 M15 4v16',cases:'M12 3 2 21h20L12 3z M12 9v5 M12 17v1',classes:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M17 4a4 4 0 0 1 0 7 M22 21v-2a4 4 0 0 0-3-4',data:'M4 4h16v5H4z M4 12h16v8H4z M8 16h2'};
-  const navs=[['lesson','Hodiny'],['matrix','Polrok'],['cases','Prípady'],['classes','Triedy'],['data','Údaje']];
+  icons.settings='M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6';
+  const navs=[['lesson','Hodiny'],['matrix','Polrok'],['cases','Prípady'],['classes','Triedy'],['data','Údaje'],['settings','Nastavenia']];
   const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[k]}"/></svg>`;
   const cls=()=>state.classes.find(c=>c.id===classId);
   const lesson=()=>state.lessons.find(l=>l.id===lessonId&&l.classId===classId);
@@ -18,7 +21,52 @@
   const mark=m=>`<span class="mark ${markClass(m)}" title="${E(PHE.LABELS[m])}">${E(m)}</span>`;
   const options=()=>state.classes.map(c=>`<option value="${E(c.id)}" ${c.id===classId?'selected':''}>${E(c.name)}</option>`).join('');
   function toast(message,bad=false) { const n=$('#notice');n.textContent=message;n.className='show'+(bad?' bad':'');clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.className='',bad?11000:4500); }
-  function selectValid() {if(!cls())classId=state.classes[0]?.id;if(!lesson())lessonId=state.lessons.filter(l=>l.classId===classId).at(-1)?.id;}
+  function selectValid() {
+    if(!cls())classId=state.classes[0]?.id;
+    if(lessonId && !lesson())lessonId=undefined;
+    // null deliberately means a selected class without an attendance lesson.
+    if(lessonId===undefined)lessonId=state.lessons.filter(l=>l.classId===classId).at(-1)?.id;
+  }
+  const preferenceKey=()=>`phe-register-ui:${remote?'school':'local'}:${store.actor}`;
+  function preference(action) {
+    try {return action();}catch {if(!storageWarning){storageWarning=true;toast('Prehliadač neumožnil zapamätať výber triedy. Údaje evidencie tým nie sú zmenené.',true);}return null;}
+  }
+  function loadSelection() {
+    lastManualClassId=preference(()=>localStorage.getItem(preferenceKey()+':manual'));
+    const saved=preference(()=>JSON.parse(sessionStorage.getItem(preferenceKey()+':lesson')||'null'));
+    if(saved && saved.epoch===(state.storageEpoch||'school')) {
+      const l=state.lessons.find(l=>l.id===saved.lessonId && l.classId===saved.classId);
+      if(l && (saved.pinned||!l.finished)) {classId=l.classId;lessonId=l.id;historyPinned=!!saved.pinned;}
+    }
+  }
+  function rememberSelection() {
+    const l=lesson(),pinned=historyPinned||!!l&&l.date!==T.clock().date;
+    preference(()=>{
+      if(l && (!l.finished||pinned))sessionStorage.setItem(preferenceKey()+':lesson',JSON.stringify({classId,lessonId:l.id,pinned,epoch:state.storageEpoch||'school'}));
+      else sessionStorage.removeItem(preferenceKey()+':lesson');
+    });
+  }
+  function selectBySchedule(initial=false) {
+    if(!state || view!=='lesson')return false;
+    const l=lesson(),result=T.select(state,{actor:store.actor,now:new Date(),currentClassId:classId,lastManualClassId,manual:manualOverride,busy,editing:dirty||!!expanded||!!document.activeElement?.matches('input,select,textarea'),working:!!l&&!l.finished,historical:historyPinned||!!l&&l.date!==T.clock().date});
+    if(['protected','manual'].includes(result.reason))return false;
+    const slotKey=result.slot?result.slot.date+':'+result.slot.id:null;
+    const changed=result.classId!==classId || slotKey!==autoSlotKey || selectionReason!==result.reason;
+    if(changed) {
+      classId=result.classId;autoSlotKey=slotKey;selectionReason=result.reason;
+      if(result.slot || !initial)lessonId=null;
+      historyPinned=false;expanded=null;historyFor=null;
+    }
+    return changed;
+  }
+  function scheduleTick() {if(selectBySchedule())render();}
+  function scheduleHint() {
+    const l=lesson(),slot=T.candidate(state,store.actor);
+    const protectedLesson=historyPinned||l&&(!l.finished||l.date!==T.clock().date);
+    let text=manualOverride?'Manuálny výber triedy.':selectionReason==='fallback'?'Mimo rozvrhu · posledná zvolená trieda.':`Podľa rozvrhu · ${slot?.reason==='current'?'prebieha':'nasleduje'} ${slot?slot.start+' – '+slot.end:''}`;
+    if(protectedLesson)text='Otvorená hodina · automatické prepnutie je pozastavené.';
+    return `<div class="schedule-hint"><small>${E(text)}</small>${protectedLesson?(historyPinned||l?.date!==T.clock().date?'<button class="plain" data-action="leave-lesson">Späť na rozvrh</button>':''):`<button class="plain" data-action="use-schedule">Použiť rozvrh</button>`}</div>`;
+  }
   function legend() {return `<div class="legend">${PHE.MARKS.map(m=>`<span>${mark(m)} ${E(PHE.LABELS[m])}</span>`).join('')}</div>`;}
   function heading(title,sub,action='') {return `<div class="heading"><div><div class="eyebrow">Physical & Health Education</div><h1>${title}</h1><p>${sub}</p></div>${action}</div>`;}
   function historyHTML(events) {return `<div class="history">${events.length?events.slice().reverse().map(e=>`<div class="history-item">${E(eventLabel(e))}<small>${E(time(e.at))} · ${E(e.actor)}</small></div>`).join(''):'Zatiaľ bez zmien.'}</div>`;}
@@ -28,6 +76,8 @@
     if(c.op==='case.resolve') {const ca=state.cases.find(x=>x.id===c.id),le=state.lessons.find(x=>x.id===ca?.lessonId),pe=le?.roster.find(x=>x.id===ca?.studentId);return `${pe?name(pe):'Prípad'}: vyriešenie ${c.resolution==='without'?'bez ospravedlnenia':c.resolution}`;}
     if(c.op==='lesson.create')return `Vytvorená hodina ${date(c.date)}; všetci ✓`;
     if(c.op==='lesson.update')return `Úprava hodiny: ${date(c.date)}, ${c.topic||'bez témy'}, ${c.finished?'ukončená':'otvorená'}`;
+    if(c.op==='schedule.upsert')return `Rozvrh: ${T.DAYS[c.day-1]} ${c.start} – ${c.end} · ${state.classes.find(x=>x.id===c.classId)?.name||c.classId}`;
+    if(c.op==='schedule.delete')return 'Odstránená položka rozvrhu';
     return `${c.op==='class.create'?'Vytvorená':'Upravená'} trieda ${c.name}`;
   }
   function studentHistory(l,p) {return state.events.filter(e=>e.command.op==='lesson.create'&&e.command.id===l || e.command.lessonId===l&&e.command.studentId===p || e.command.op==='case.resolve'&&state.cases.some(c=>c.id===e.command.id&&c.lessonId===l&&c.studentId===p));}
@@ -36,7 +86,7 @@
     let html=heading('Evidencia hodiny','Malé zápisy. Jasný prehľad o celej triede.',`<button class="primary" data-action="new-lesson" ${!cls()||!cls().students.some(p=>p.active)?'disabled':''}>＋ Nová hodina</button>`);
     html+=`<section class="panel"><div class="lesson-tools"><label>Trieda<select id="class-select" aria-label="Trieda">${options()}</select></label><label>Hodina<select id="lesson-select" aria-label="Hodina"><option value="" ${!l?'selected':''} disabled>Vyberte hodinu</option>${state.lessons.filter(x=>x.classId===classId).slice().reverse().map((x,i,a)=>`<option value="${x.id}" ${x.id===lessonId?'selected':''}>${date(x.date)} · #${a.length-i}${x.topic?' · '+E(x.topic):''}</option>`).join('')}</select></label><span class="status-pill">${l?(l.finished?'Ukončená hodina':'Prebieha evidencia'):'Pripravené na hodinu'}</span></div>`;
     if(l)html+=`<div class="lesson-meta"><label>Dátum<input id="lesson-date" type="date" min="2000-01-01" max="2100-12-31" value="${l.date}" ${l.finished?'disabled':''}></label><label>Téma hodiny · voliteľné<input id="lesson-topic" maxlength="200" value="${E(l.topic)}" placeholder="Napr. loptové hry" ${l.finished?'disabled':''}></label><button class="soft" data-action="finish">${l.finished?'Znovu otvoriť':'Ukončiť hodinu'}</button></div>`;
-    html+='</section>';
+    html+='</section>'+scheduleHint();
     if(!l)return html+`<div class="empty"><h2>Začnite novú hodinu</h2><p>Každý žiak bude automaticky označený ✓. Zmeníte iba výnimky.</p>${cls()?'':'<button data-view="classes" class="primary">Vytvoriť triedu</button>'}</div>`+legend();
     const records=state.records.filter(r=>r.lessonId===l.id),n=m=>records.filter(r=>r.status===m).length;
     html+=`<div class="stats"><div class="stat"><div><div class="stat-label">Prítomní</div><strong>${records.length-n('–')} <small>/ ${records.length}</small></strong></div><span class="icon-circle">✓</span></div><div class="stat"><div><div class="stat-label">Cvičia</div><strong>${n('✓')}</strong></div><span class="icon-circle">✓</span></div><div class="stat"><div><div class="stat-label">Necvičia</div><strong>${records.length-n('✓')-n('–')}</strong></div><span class="icon-circle">–</span></div><div class="stat alert"><div><div class="stat-label">Otvorené prípady</div><strong>${state.cases.filter(c=>c.lessonId===l.id&&c.state==='open').length}</strong></div><span class="icon-circle">!</span></div></div>`;
@@ -68,13 +118,21 @@
     const c=cls();
     return heading('Triedy a žiaci','Spoločný zoznam pre celú triedu. Chlapci a dievčatá prehľadne.')+`<form id="new-class" class="panel panel-body"><h2>Nová trieda</h2><div class="row" style="margin-top:14px"><input name="name" aria-label="Názov novej triedy" placeholder="Napr. 8. B" maxlength="60" required><button class="primary" type="submit">Vytvoriť</button></div></form>${c?`<div class="panel panel-body"><label>Upraviť triedu<select id="class-select">${options()}</select></label><form id="class-form" data-version="${c.version}"><label style="margin-top:18px">Názov triedy<input name="className" value="${E(c.name)}" maxlength="60" required></label><p class="hint">Zmeny zoznamu platia pre nové hodiny. Staršie hodiny si zachovajú pôvodné mená aj skupiny. Tlačidlo − archivuje žiaka.</p><div class="roster-editor">${['boys','girls'].flatMap(g=>PHE.sorted(c.students.filter(p=>p.group===g))).map(editorRow).join('')}</div><div class="row wrap" style="margin-top:18px"><button type="button" data-action="add-student">＋ Pridať žiaka</button><button type="submit" class="primary">Uložiť triedu</button></div><p class="hint">Platné úpravy sa uložia automaticky po opustení poľa. Pri novom žiakovi doplňte meno aj priezvisko.</p></form></div>`:''}`;
   }
+  function settingsView() {
+    const entries=T.entries(state,store.actor);
+    const form=d=>`<form id="schedule-form" class="schedule-form" data-day="${d.day}"><label>Začiatok<input name="start" type="time" step="60" value="${E(d.start)}" required></label><label>Koniec<input name="end" type="time" step="60" value="${E(d.end)}" required></label><label class="schedule-class">Trieda<select name="classId" required><option value="" disabled ${!d.classId?'selected':''}>Vyberte triedu</option>${state.classes.map(c=>`<option value="${E(c.id)}" ${d.classId===c.id?'selected':''}>${E(c.name)}</option>`).join('')}</select></label><div class="row wrap"><button class="primary" type="submit">Uložiť do rozvrhu</button><button type="button" data-action="cancel-schedule">Zrušiť</button></div></form>`;
+    return heading('Nastavenia','Rozvrh pre rýchly výber triedy.',`<span class="badge">VERZIA 1.1</span>`)+`<section class="panel panel-body"><h2>Rozvrh</h2><p class="hint">Nastavte si hodiny od pondelka do piatka. Počet položiek si určujete sami. Časy sa vyhodnocujú pre Bratislavu. Počas prestávky sa ponúkne nasledujúca trieda z dnešného rozvrhu.</p><p class="hint">Manuálny výber má prednosť do opätovného otvorenia aplikácie alebo voľby Použiť rozvrh. Rozpracovaná a historická hodina zostávajú otvorené. Rozvrh nikdy nevytvorí nový zápis hodiny.</p><small>${remote?'Každý oprávnený učiteľ má vlastný rozvrh podľa školského účtu.':'Rozvrh patrí lokálnemu učiteľovi v tomto prehliadači.'} Je súčasťou úplnej zálohy JSON.</small></section>${!state.classes.length?'<div class="empty"><h2>Najprv vytvorte triedu</h2><p>Rozvrh používa triedy z vašej evidencie.</p><button data-view="classes">Otvoriť triedy</button></div>':''}<div class="schedule-days">${T.DAYS.map((label,i)=>{
+      const day=i+1,items=entries.filter(e=>e.day===day).sort((a,b)=>a.start.localeCompare(b.start));
+      return `<section class="panel panel-body schedule-day" data-day="${day}"><div class="row" style="justify-content:space-between"><h2>${label}</h2><button data-schedule-add="${day}" ${!state.classes.length?'disabled':''}>＋ Pridať hodinu</button></div>${items.length?items.map(e=>`<div class="schedule-item" data-schedule-id="${e.id}"><div><strong>${E(e.start)} – ${E(e.end)}</strong><span>${E(state.classes.find(c=>c.id===e.classId)?.name||'Neznáma trieda')}</span></div><div class="row"><button data-schedule-edit="${e.id}" aria-label="Upraviť ${label} ${E(e.start)}">Upraviť</button><button class="danger" data-schedule-delete="${e.id}" aria-label="Odstrániť ${label} ${E(e.start)}">Odstrániť</button></div></div>`).join(''):'<p class="hint">Zatiaľ bez hodín.</p>'}${scheduleDraft?.day===day?form(scheduleDraft):''}</section>`;
+    }).join('')}</div>`;
+  }
   function dataView() {
-    return heading('Údaje a zálohy','Vaša evidencia pod kontrolou.',`<span class="badge">PROTOTYP 1.0</span>`)+`<div class="data-grid"><section class="panel panel-body"><h2>Úplná záloha</h2><p>JSON obsahuje triedy, hodiny, značky, otvorené aj vyriešené prípady a celú históriu. Uchovajte si ho na bezpečnom mieste.</p><button class="primary" data-action="backup">↓ Stiahnuť zálohu</button></section><section class="panel panel-body"><h2>Obnoviť zo zálohy</h2><p>${remote?'Obnovu školského úložiska vykonáva správca do novej prázdnej tabuľky podľa technického návodu.':'Vyberte JSON zálohu. Pred nahradením údajov uvidíte jej obsah a počet záznamov.'}</p>${remote?'':`<label>Vybrať súbor zálohy<input id="import-file" type="file" accept=".json,application/json"></label>`}</section></div>${pendingBackup?`<div class="danger-box"><h3>Záloha je platná</h3><p class="hint">${pendingBackup.state.classes.length} tried · ${pendingBackup.state.lessons.length} hodín · ${pendingBackup.state.events.length} udalostí. Obnova nahradí aktuálnu lokálnu evidenciu. Súčasné údaje sa najprv stiahnu ako záloha a uchovajú aj v databáze pod before-restore.</p><button class="danger" data-action="restore">Nahradiť lokálne údaje</button><button data-action="cancel-restore">Zrušiť</button></div>`:''}<section class="panel panel-body"><h2>${remote?'Školské úložisko':'Lokálny režim · fiktívne údaje'}</h2><p class="hint">${remote?'Údaje sa ukladajú do školského Google Sheets. Používateľa, oprávnenia a verziu zápisu kontroluje server.':'Údaje sú uložené iba v tomto prehliadači pomocou IndexedDB. Zariadenia sa nesynchronizujú. Vymazanie dát prehliadača odstráni evidenciu, preto pravidelne vytvárajte zálohu. Tento režim používajte s fiktívnymi údajmi.'}</p><div class="row wrap"><span class="badge">${state.lessons.length} hodín</span><span class="badge">${state.events.length} zmien</span><span class="badge">${state.cases.filter(c=>c.state==='open').length} otvorených prípadov</span></div></section><section class="panel panel-body"><h2>História úprav</h2><p class="hint">Zobrazených posledných 100 zmien. Úplná história je v zálohe JSON.</p>${historyHTML(state.events.slice(-100))}</section>`;
+    return heading('Údaje a zálohy','Vaša evidencia pod kontrolou.',`<span class="badge">PROTOTYP 1.1</span>`)+`<div class="data-grid"><section class="panel panel-body"><h2>Úplná záloha</h2><p>JSON obsahuje triedy, hodiny, značky, rozvrh, otvorené aj vyriešené prípady a celú históriu. Uchovajte si ho na bezpečnom mieste.</p><button class="primary" data-action="backup">↓ Stiahnuť zálohu</button></section><section class="panel panel-body"><h2>Obnoviť zo zálohy</h2><p>${remote?'Obnovu školského úložiska vykonáva správca do novej prázdnej tabuľky podľa technického návodu.':'Vyberte JSON zálohu. Pred nahradením údajov uvidíte jej obsah a počet záznamov.'}</p>${remote?'':`<label>Vybrať súbor zálohy<input id="import-file" type="file" accept=".json,application/json"></label>`}</section></div>${pendingBackup?`<div class="danger-box"><h3>Záloha je platná</h3><p class="hint">${pendingBackup.state.classes.length} tried · ${pendingBackup.state.lessons.length} hodín · ${pendingBackup.state.events.length} udalostí. Obnova nahradí aktuálnu lokálnu evidenciu. Súčasné údaje sa najprv stiahnu ako záloha a uchovajú aj v databáze pod before-restore.</p><button class="danger" data-action="restore">Nahradiť lokálne údaje</button><button data-action="cancel-restore">Zrušiť</button></div>`:''}<section class="panel panel-body"><h2>${remote?'Školské úložisko':'Lokálny režim · fiktívne údaje'}</h2><p class="hint">${remote?'Údaje sa ukladajú do školského Google Sheets. Používateľa, oprávnenia a verziu zápisu kontroluje server.':'Údaje sú uložené iba v tomto prehliadači pomocou IndexedDB. Zariadenia sa nesynchronizujú. Vymazanie dát prehliadača odstráni evidenciu, preto pravidelne vytvárajte zálohu. Tento režim používajte s fiktívnymi údajmi.'}</p><div class="row wrap"><span class="badge">${state.lessons.length} hodín</span><span class="badge">${state.events.length} zmien</span><span class="badge">${state.cases.filter(c=>c.state==='open').length} otvorených prípadov</span></div></section><section class="panel panel-body"><h2>História úprav</h2><p class="hint">Zobrazených posledných 100 zmien. Úplná história je v zálohe JSON.</p>${historyHTML(state.events.slice(-100))}</section>`;
   }
   function render() {
-    selectValid();
+    selectValid();dirty=false;rememberSelection();
     const n=state.cases.filter(c=>c.state==='open').length;
-    $('#app').innerHTML=`<div class="layout"><aside class="sidebar"><div class="brand"><span class="brand-icon">P</span><div>PHE Register<small>Priestor pre pohyb</small></div></div><div class="nav-label">VAŠA EVIDENCIA</div><nav class="nav" aria-label="Hlavná navigácia">${navs.map(([k,t])=>`<button data-view="${k}" ${view===k?'class="active" aria-current="page"':''}>${svg(k)}<span>${t}</span>${k==='cases'&&n?`<span class="count">${n}</span>`:''}</button>`).join('')}</nav><div class="sidebar-foot"><span class="mode-dot"></span>${remote?'Školský režim':'Lokálny prototyp'}<br><small>${remote?'Google Workspace':'Iba fiktívne údaje'}<br>PHE Register / 1.0</small></div></aside><div class="workspace"><header class="topbar"><span class="crumb">Pracovný priestor &nbsp; / &nbsp; <strong>${navs.find(x=>x[0]===view)[1]}</strong></span><span class="mobile-brand"><span class="brand-icon">P</span>PHE Register</span><div class="top-right"><span class="save ${saveError?'error':''}" role="status">${busy?'◌':saveError?'!':'✓'} ${E(saveText||(remote?'Načítané zo školy':'Uložené lokálne'))}</span><button class="plain refresh" data-action="refresh" aria-label="Obnoviť údaje">↻ Obnoviť</button><span class="avatar">PHE</span></div></header><main class="main">${n?`<div class="alert-banner" role="alert"><span class="alert-symbol">!</span><div><strong>Otvorené prípady: ${n}</strong><br>Čakajú na doplnenie alebo uzavretie.</div><button data-view="cases">Zobraziť prípady →</button></div>`:''}${({lesson:lessonView,matrix:matrixView,cases:casesView,classes:classesView,data:dataView}[view])()}</main></div></div>`;
+    $('#app').innerHTML=`<div class="layout"><aside class="sidebar"><div class="brand"><span class="brand-icon">P</span><div>PHE Register<small>Priestor pre pohyb</small></div></div><div class="nav-label">VAŠA EVIDENCIA</div><nav class="nav" aria-label="Hlavná navigácia">${navs.map(([k,t])=>`<button data-view="${k}" ${view===k?'class="active" aria-current="page"':''}>${svg(k)}<span>${t}</span>${k==='cases'&&n?`<span class="count">${n}</span>`:''}</button>`).join('')}</nav><div class="sidebar-foot"><span class="mode-dot"></span>${remote?'Školský režim':'Lokálny prototyp'}<br><small>${remote?'Google Workspace':'Iba fiktívne údaje'}<br>PHE Register / 1.1</small></div></aside><div class="workspace"><header class="topbar"><span class="crumb">Pracovný priestor &nbsp; / &nbsp; <strong>${navs.find(x=>x[0]===view)[1]}</strong></span><span class="mobile-brand"><span class="brand-icon">P</span>PHE Register</span><div class="top-right"><span class="save ${saveError?'error':''}" role="status">${busy?'◌':saveError?'!':'✓'} ${E(saveText||(remote?'Načítané zo školy':'Uložené lokálne'))}</span><button class="plain refresh" data-action="refresh" aria-label="Obnoviť údaje">↻ Obnoviť</button><span class="avatar">PHE</span></div></header><main class="main">${n?`<div class="alert-banner" role="alert"><span class="alert-symbol">!</span><div><strong>Otvorené prípady: ${n}</strong><br>Čakajú na doplnenie alebo uzavretie.</div><button data-view="cases">Zobraziť prípady →</button></div>`:''}${({lesson:lessonView,matrix:matrixView,cases:casesView,classes:classesView,data:dataView,settings:settingsView}[view])()}</main></div></div>`;
     if(busy)$('#app').querySelectorAll('button,input,select').forEach(e=>e.disabled=true);
   }
   function indicate(text,error=false) {saveText=text;saveError=error;const e=$('.save');if(e){e.textContent=(error?'! ':busy?'◌ ':'✓ ')+text;e.classList.toggle('error',error);}}
@@ -83,7 +141,7 @@
     try {state=await store.command(command);busy=false;indicate(remote?'Uložené v škole':'Uložené lokálne');if(after)after();channel?.postMessage('changed');render();return true;}
     catch(e) {busy=false;try{state=await store.read();}catch{}indicate('Zmena nepotvrdená',true);render();toast(e.message,true);return false;}
   }
-  async function refresh(manual=true) {if(busy)return;if(!manual&&document.activeElement?.matches('input,select'))return;try{const latest=await store.read();if(manual||latest.revision!==state.revision||latest.storageEpoch!==state.storageEpoch){state=latest;saveError=false;saveText=remote?'Načítané zo školy':'Uložené lokálne';render();if(manual)toast('Údaje sú aktuálne.');}}catch(e){indicate('Načítanie zlyhalo',true);if(manual)toast(e.message,true);}}
+  async function refresh(manual=true) {if(busy)return;if(!manual&&(dirty||scheduleDraft||document.activeElement?.matches('input,select')))return;try{const latest=await store.read();if(manual||latest.revision!==state.revision||latest.storageEpoch!==state.storageEpoch){state=latest;saveError=false;saveText=remote?'Načítané zo školy':'Uložené lokálne';render();if(manual)toast('Údaje sú aktuálne.');}scheduleTick();}catch(e){indicate('Načítanie zlyhalo',true);if(manual)toast(e.message,true);}}
   function lessonUpdate(patch) {const l=lesson();return {op:'lesson.update',id:l.id,expected:l.version,date:l.date,topic:l.topic,finished:l.finished,...patch};}
   function report() {
     if(view==='cases')return {title:'Prípady · všetky triedy',rows:[['Žiak','Trieda / hodina','Pôvodný stav / dátum','Stav prípadu'],...state.cases.map(c=>{const l=state.lessons.find(l=>l.id===c.lessonId),p=l.roster.find(p=>p.id===c.studentId);return [name(p),l.className+' / '+date(l.date),'! / '+date(c.originalDate),c.state==='open'?'Otvorený':c.resolution==='without'?'Uzavretý bez ospravedlnenia':c.resolution];})]};
@@ -93,16 +151,26 @@
   function printReport() {const r=report(),chunks=[];if(view==='matrix'){for(let i=2;i<Math.max(3,r.rows[0].length);i+=8)chunks.push(r.rows.map(row=>[...row.slice(0,2),...row.slice(i,i+8)]));}else chunks.push(r.rows);$('#print-area').innerHTML=chunks.map((rows,i)=>`<section class="print-page"><h1>PHE Register · ${E(r.title)}</h1><p>Vytlačené ${date(PHE.today())}${chunks.length>1?' · časť '+(i+1)+' / '+chunks.length:''}</p><table><thead><tr>${rows[0].map(v=>`<th>${E(v)}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map(row=>'<tr>'+row.map(v=>`<td>${E(v)}</td>`).join('')+'</tr>').join('')}</tbody></table><p>✓ pripravený, cvičí · – neprítomný · A nemá úbor · ! bez ospravedlnenia · Ep rodič · Ed lekár</p><p>Stav otvorenia alebo uzavretia ! je v prehľade Prípady. Prázdne pole: žiak nebol v zozname hodiny.</p></section>`).join('');window.print();}
   $('#app').addEventListener('click',async e=>{
     const b=e.target.closest('button');if(!b||busy)return;
+    if(b.dataset.scheduleAdd){scheduleDraft={id:uuid(),expected:0,day:Number(b.dataset.scheduleAdd),start:'',end:'',classId:classId||state.classes[0]?.id||''};render();$('#schedule-form input').focus();return;}
+    if(b.dataset.scheduleEdit){const e=T.entries(state,store.actor).find(e=>e.id===b.dataset.scheduleEdit);scheduleDraft={id:e.id,expected:e.version,day:e.day,start:e.start,end:e.end,classId:e.classId};render();$('#schedule-form input').focus();return;}
+    if(b.dataset.scheduleDelete){const e=T.entries(state,store.actor).find(e=>e.id===b.dataset.scheduleDelete);await mutate({op:'schedule.delete',id:e.id,expected:e.version},()=>{if(scheduleDraft?.id===e.id)scheduleDraft=null;});return;}
     if(b.dataset.view){view=b.dataset.view;expanded=null;render();return;}
     if(b.dataset.student){expanded=expanded===b.dataset.student?null:b.dataset.student;historyFor=null;render();return;}
     if(b.dataset.history){historyFor=historyFor===b.dataset.history?null:b.dataset.history;render();return;}
     if(b.dataset.mark){const r=record(lessonId,b.dataset.pupil);await mutate({op:'record.set',lessonId,studentId:r.studentId,expected:r.version,status:b.dataset.mark},()=>{expanded=null;historyFor=null;});return;}
     if(b.dataset.resolve){const c=state.cases.find(c=>c.id===b.dataset.case),r=record(c.lessonId,c.studentId);await mutate({op:'case.resolve',id:c.id,expected:c.version,expectedRecord:r.version,resolution:b.dataset.resolve});return;}
-    if(b.dataset.openLesson){const l=state.lessons.find(l=>l.id===b.dataset.openLesson);classId=l.classId;lessonId=l.id;view='lesson';expanded=null;render();window.scrollTo(0,0);return;}
+    if(b.dataset.openLesson){const l=state.lessons.find(l=>l.id===b.dataset.openLesson);classId=l.classId;lessonId=l.id;historyPinned=true;view='lesson';expanded=null;render();window.scrollTo(0,0);return;}
     if(b.hasAttribute('data-archive')){const row=b.closest('.edit-pupil'),active=row.dataset.active!=='true';row.dataset.active=String(active);row.classList.toggle('archived',!active);b.textContent=active?'−':'↶';b.setAttribute('aria-label',active?'Archivovať žiaka':'Obnoviť žiaka');if(!cls().students.some(p=>p.id===row.dataset.id)&&![...row.querySelectorAll('input')].some(i=>i.value.trim()))row.remove();await saveClass($('#class-form'));return;}
     switch(b.dataset.action) {
-      case 'new-lesson': {const id=uuid();await mutate({op:'lesson.create',id,classId,expectedClass:cls().version,date:PHE.today(),topic:''},()=>{lessonId=id;expanded=null;search='';});break;}
-      case 'finish': await mutate(lessonUpdate({finished:!lesson().finished}));break;
+      case 'leave-lesson':
+        if(dirty)break;
+        lessonId=null;historyPinned=false;manualOverride=false;selectBySchedule();render();break;
+      case 'cancel-schedule':scheduleDraft=null;saveText=remote?'Načítané zo školy':'Uložené lokálne';saveError=false;render();break;
+      case 'use-schedule':
+        if(dirty||historyPinned||lesson()&&(!lesson().finished||lesson().date!==T.clock().date))break;
+        manualOverride=false;selectBySchedule();render();break;
+      case 'new-lesson': {const id=uuid();await mutate({op:'lesson.create',id,classId,expectedClass:cls().version,date:PHE.today(),topic:''},()=>{lessonId=id;historyPinned=false;expanded=null;search='';});break;}
+      case 'finish': if(await mutate(lessonUpdate({finished:!lesson().finished})))scheduleTick();break;
       case 'refresh':await refresh();break;
       case 'semester':[from,to]=PHE.semester(PHE.today());render();break;
       case 'add-student': $('.roster-editor').insertAdjacentHTML('beforeend',editorRow({id:uuid(),firstName:'',lastName:'',group:'boys',active:true}));$('.edit-pupil:last-child input').focus();break;
@@ -120,14 +188,14 @@
   $('#app').addEventListener('change',async e=>{
     const t=e.target;if(busy)return;
     if(t.closest('#class-form')){await saveClass(t.closest('#class-form'));return;}
-    if(t.id==='class-select'){classId=t.value;lessonId=null;expanded=null;render();}
-    if(t.id==='lesson-select'){lessonId=t.value;expanded=null;render();}
+    if(t.id==='class-select'){classId=t.value;lastManualClassId=classId;manualOverride=true;historyPinned=false;lessonId=undefined;expanded=null;preference(()=>localStorage.setItem(preferenceKey()+':manual',classId));render();}
+    if(t.id==='lesson-select'){lessonId=t.value;historyPinned=true;expanded=null;render();}
     if(t.id==='lesson-date'){if(t.checkValidity()&&t.value)await mutate(lessonUpdate({date:t.value}));else{toast('Vyberte platný dátum.',true);render();}}
     if(t.id==='lesson-topic')await mutate(lessonUpdate({topic:t.value}));
     if(t.id==='date-from'||t.id==='date-to'){const nextFrom=t.id==='date-from'?t.value:from,nextTo=t.id==='date-to'?t.value:to;if(!nextFrom||!nextTo||nextFrom>nextTo){toast('Začiatok obdobia musí byť pred koncom.',true);render();return;}from=nextFrom;to=nextTo;render();}
     if(t.id==='import-file'&&t.files[0]){try{if(t.files[0].size>15*1024*1024)throw new Error('Záloha prekračuje 15 MB.');const backup=JSON.parse(await t.files[0].text()),restored=PHE.restore(backup);pendingBackup={backup,state:restored,expected:state.revision,epoch:state.storageEpoch};render();}catch(err){toast('Zálohu nemožno načítať: '+err.message,true);}}
   });
-  $('#app').addEventListener('input',e=>{if(e.target.closest('#class-form')||e.target.id==='lesson-topic')indicate('Neuložené úpravy');if(e.target.id==='search'){const pos=e.target.selectionStart;search=e.target.value;render();$('#search').focus();try{$('#search').setSelectionRange(pos,pos);}catch{}}});
+  $('#app').addEventListener('input',e=>{if(e.target.closest('#class-form')||e.target.id==='lesson-topic'||e.target.id==='lesson-date'||e.target.closest('#schedule-form')){dirty=true;indicate('Neuložené úpravy');}if(e.target.id==='search'){const pos=e.target.selectionStart;search=e.target.value;render();$('#search').focus();try{$('#search').setSelectionRange(pos,pos);}catch{}}});
   async function saveClass(form) {
     if(!form.checkValidity()){indicate('Neuložené: doplňte mená',true);return;}
     const pupils=[...form.querySelectorAll('.edit-pupil')].map(row=>({id:row.dataset.id,active:row.dataset.active==='true',firstName:row.querySelector('[name=firstName]').value.trim(),lastName:row.querySelector('[name=lastName]').value.trim(),group:row.querySelector('select').value}));
@@ -136,10 +204,14 @@
   $('#app').addEventListener('submit',async e=>{
     e.preventDefault();if(busy)return;
     const form=e.target;
+    if(form.id==='schedule-form') {
+      scheduleDraft={...scheduleDraft,start:form.elements.start.value,end:form.elements.end.value,classId:form.elements.classId.value};
+      await mutate({op:'schedule.upsert',...scheduleDraft},()=>{scheduleDraft=null;});return;
+    }
     if(form.id==='new-class'){const id=uuid();await mutate({op:'class.create',id,name:form.elements.name.value.trim(),students:[]},()=>{classId=id;lessonId=null;});}
     if(form.id==='class-form')await saveClass(form);
   });
   let channel=null;
-  try {state=await store.init();if('BroadcastChannel' in window&&!remote){channel=new BroadcastChannel('phe-register');channel.onmessage=()=>refresh(false);}render();window.addEventListener('focus',()=>refresh(false));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh(false);});}
+  try {state=await store.init();loadSelection();selectBySchedule(true);if('BroadcastChannel' in window&&!remote){channel=new BroadcastChannel('phe-register');channel.onmessage=()=>refresh(false);}render();setInterval(scheduleTick,1000);window.addEventListener('focus',()=>refresh(false));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh(false);});}
   catch(e){$('#app').innerHTML=`<div class="fatal"><h1>Evidenciu nemožno otvoriť</h1><p>${E(e.message)}</p><p>${remote?'Skontrolujte školské prihlásenie a kontaktujte správcu.':'Povoľte úložisko prehliadača. Na iPhone otvorte aplikáciu cez HTTP server podľa README; nepoužívajte náhľad súboru. Žiadne dáta neboli automaticky vymazané.'}</p><button onclick="location.reload()">Skúsiť znova</button></div>`;}
 })();

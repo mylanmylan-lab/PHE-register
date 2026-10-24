@@ -1,4 +1,4 @@
-/* PHE Register 1.0 — prepared backend, not deployed.
+/* PHE Register 1.1 — prepared backend, not deployed.
  * Deploy as USER_ACCESSING, domain-only. Never execute as owner.
  * Only api() and doGet() are public. Helpers end in underscore.
  * Sheet Events: one committed event per row; projections are rebuilt in memory.
@@ -57,9 +57,9 @@ function api(request) {
     if(request.action!=='read' && request.action!=='command')PHE.fail('VALIDATION','Neznáma operácia.');
     return locked_(function(){
       var sh=sheet_(user.config),state=stateFromSheet_(sh);
-      if(request.action==='read')return {ok:true,state:state};
+      if(request.action==='read')return {ok:true,state:state,actor:user.email};
       var next=PHE.apply(state,request.command,{id:request.requestId,at:new Date().toISOString(),actor:user.email});
-      if(next===state)return {ok:true,state:state}; // retry after uncertain network result
+      if(next===state)return {ok:true,state:state,actor:user.email}; // retry after uncertain network result
       if(state.events.length>=PHE_MAX_EVENTS_)PHE.fail('LIMIT','Dosiahnutý limit 10 000 zmien prototypu. Vytvorte zálohu a kontaktujte správcu.');
       var event=next.events[next.events.length-1],json=JSON.stringify(event);
       if(json.length>40000)PHE.fail('VALIDATION','Záznam prekračuje kapacitu bunky.');
@@ -69,7 +69,7 @@ function api(request) {
       SpreadsheetApp.flush();
       var saved=target.getValues()[0];
       if(saved[0]!==next.revision || saved[1]!==json)PHE.fail('STORAGE','Zápis sa nepodarilo overiť. Obnovte údaje pred ďalšou zmenou.');
-      return {ok:true,state:next};
+      return {ok:true,state:next,actor:user.email};
     });
   } catch(e) {
     var known=['CONFIG','FORBIDDEN','BUSY','CORRUPT','VALIDATION','CONFLICT','NOT_FOUND','LIMIT','STORAGE'];

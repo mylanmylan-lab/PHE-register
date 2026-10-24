@@ -1,4 +1,4 @@
-# PHE Register 1.0
+# PHE Register 1.1 – Inteligentný rozvrh
 
 Funkčný mobilný prototyp evidencie účasti a pripravenosti na PHE. Rozhranie je v slovenčine, bez platených služieb a bez knižníc potrebných na samotný beh. Obsahuje **20 fiktívnych žiakov** v triede 7. A.
 
@@ -55,6 +55,21 @@ LAN režim slúži iba na test s fiktívnymi údajmi. Server sprístupňuje súb
 - **Triedy:** vytvorte triedu, doplňte mená a skupinu. Platná úprava sa automaticky uloží po opustení poľa; je dostupné aj tlačidlo Uložiť triedu. Pri novom žiakovi treba doplniť meno aj priezvisko. Tlačidlo − archivuje žiaka, ↶ ho obnoví. Staré hodiny si ponechajú pôvodný zoznam a mená.
 - **Polrok:** tabuľka žiaci × hodiny, s voľbou obdobia. Prvý polrok je september–január, druhý február–august; dátumy možno zmeniť. Kliknutím na dátum otvoríte hodinu. Prázdne pole znamená, že žiak nebol v zozname danej hodiny.
 - **História:** rozbaľte žiaka alebo prípad. V Údajoch je posledných 100 zmien; JSON záloha obsahuje všetky.
+- **Nastavenia → Rozvrh:** pri pracovnom dni kliknite na Pridať hodinu, vyplňte začiatok, koniec a existujúcu triedu, potom Uložiť do rozvrhu. Počet položiek nie je pevne stanovený. Uložené položky možno upraviť alebo odstrániť.
+
+### Ako funguje inteligentný rozvrh
+
+Pri otvorení aplikácie sa predvyberie práve prebiehajúca trieda. Pred prvou hodinou a počas prestávky sa vyberie nasledujúca trieda **toho istého dňa**. Začiatok je vrátane, koniec už patrí prestávke alebo ďalšej hodine. Časy používajú Europe/Bratislava vrátane zmeny letného času. Hodiny jedného učiteľa sa nemôžu prekrývať; bezprostredne nadväzujúce časy sú povolené.
+
+Rozvrh mení iba výber triedy. **Záznam vytvorí až tlačidlo Nová hodina.** Po ukončení rozpracovaného zápisu sa môže ponúknuť nasledujúca naplánovaná trieda. Kým je zápis rozpracovaný, pole rozeditované alebo prebieha ukladanie, trieda sa automaticky neprepne.
+
+Triedu môžete vždy vybrať manuálne. Tento výber platí počas aktuálneho otvorenia aplikácie, kým nepoužijete **Použiť rozvrh**. Cez víkend, v prázdny deň alebo po poslednej hodine sa použije posledná manuálne zvolená trieda. Tento údaj si prehliadač pamätá aj po zatvorení. Ak ešte manuálny výber neexistuje, zostane aktuálna alebo prvá dostupná trieda.
+
+Otvorenie historickej hodiny pozastaví automatiku: trieda, dátum a téma zostanú zachované, aj pri obnovení tej istej karty. Na automatický výber sa vrátite výslovne cez **Späť na rozvrh**. Rozpracovaná hodina sa pri obnovení tej istej karty tiež zachová. Stav otvorenej karty nie je synchronizovaný medzi zariadeniami.
+
+Lokálny rozvrh sa ukladá v existujúcej IndexedDB a je už zahrnutý v úplnej JSON zálohe. Staré zálohy 1.0 sa načítajú bez rozvrhu a bez zmeny pôvodných údajov. Formát `schema: 1` zostáva zachovaný; pribudli typy udalostí rozvrhu. **Zálohu obsahujúcu rozvrh obnovujte vo verzii 1.1 alebo novšej** – verzia 1.0 nové udalosti nepozná. Pri aktualizácii zachovajte adresu a port lokálneho servera; pred výmenou súborov si vytvorte zálohu a zatvorte staré karty verzie 1.0.
+
+V pripravenom Google backend modeli patrí rozvrh jednotlivému školskému účtu. Server určí vlastníka podľa prihlásenia a kontroluje verzie pri úpravách. Lokálny režim používa jedného „Lokálneho učiteľa“. Skutočná školská synchronizácia ostáva predmetom konfigurácie a overenia Etapy B.
 
 Značky a ich význam:
 
@@ -99,7 +114,7 @@ Základné testy potrebujú Node.js 20+:
 npm test
 ```
 
-Prešlo **19 doménových testov + 12 testov backendu so simulovanými službami Google**. Všetkých deväť požadovaných situácií má automatický test. Browser testy overujú aj reálne IndexedDB transakcie v dvoch kartách. Výsledky a hranice overenia: [docs/TESTY.md](docs/TESTY.md).
+Vo verzii 1.1 prešlo **51 automatických testov**: 19 pôvodnej domény, 19 rozvrhu a 13 backendu so simulovanými službami Google. Prešlo aj 13 pôvodných a 15 nových scenárov v Chromium. Výsledky a hranice overenia: [docs/TESTY-1.1.md](docs/TESTY-1.1.md); pôvodný protokol 1.0 ostáva v [docs/TESTY.md](docs/TESTY.md).
 
 Voliteľné opakovanie testov prehliadača:
 
@@ -108,7 +123,7 @@ npm install --no-save playwright
 npx playwright install chromium
 ```
 
-V prvom termináli nechajte `npm start`. V druhom spustite `npm run test:browser`. Inštalácia Playwright je potrebná len pre testovanie, nie pre používateľa aplikácie. Pri vlastnom Chromium nastavte premennú `PHE_CHROMIUM` na cestu k jeho spustiteľnému súboru.
+V prvom termináli nechajte `npm start`. V druhom spustite `npm run test:browser` a potom `npm run test:browser:timetable`. Inštalácia Playwright je potrebná len pre testovanie, nie pre používateľa aplikácie. Pri vlastnom Chromium nastavte premennú `PHE_CHROMIUM` na cestu k jeho spustiteľnému súboru. Voliteľná premenná `PHE_TEST_ARTIFACTS` určuje priečinok výsledkov, aby opakovanie testov nemuselo prepísať pôvodné ukážky.
 
 Testované v Linux Chromium, pri mobilných šírkach 320, 375, 390 a 430 px. **Fyzický iPhone/Safari ani Windows Chrome neboli v tomto prostredí dostupné.** Ich manuálne overenie je v akceptačnom zozname; emulácia šírky ho nenahrádza.
 

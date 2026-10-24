@@ -1,4 +1,15 @@
-# Stav funkcií – prototyp 1.0
+# Stav funkcií – prototyp 1.1
+
+## Nové v 1.1 – dokončené
+
+- Nastavenia → Rozvrh: ľubovoľný počet položiek pre pondelok až piatok, začiatok, koniec a existujúca trieda; pridanie, úprava a odstránenie.
+- Predvýber prebiehajúcej alebo nasledujúcej dnešnej triedy, aj počas prestávok, podľa Europe/Bratislava.
+- Trvalé zapamätanie poslednej manuálnej triedy na tomto zariadení; prednosť manuálneho výberu počas otvorenia aplikácie.
+- Ochrana rozpracovanej aj historickej hodiny vrátane obnovenia tej istej karty, ochrana neuložených vstupov a prebiehajúceho zápisu.
+- Automatický výber nevytvára hodinu ani nemení historický záznam.
+- Trvalý rozvrh v pôvodnom úložisku, kompletná obnova zo zálohy, staré zálohy 1.0 bez zmeny údajov.
+- Pripravený osobný rozvrh školského účtu cez existujúce API s autorom, históriou, validáciou a kontrolou konfliktov.
+- 51 automatických testov a 28 úspešných browser scenárov; podrobnosti v [TESTY-1.1.md](TESTY-1.1.md).
 
 ## Etapa A – dokončené
 

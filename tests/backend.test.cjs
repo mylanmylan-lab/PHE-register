@@ -24,6 +24,16 @@ test('Backend: ! → Ed a história sú uložené v jednom event logu',()=>{cons
 test('Backend: neplatná značka, dátum a neznáma operácia nič nezapíšu',()=>{const s=setup(),before=s.rows.length;assert.equal(set(s,'bad','demo-1','E').code,'VALIDATION');assert.equal(s.call({action:'command',requestId:'date',command:{op:'lesson.update',id:'lesson-1',expected:1,date:'2026-02-30',topic:'',finished:false}}).code,'VALIDATION');assert.equal(s.call({action:'delete'}).code,'VALIDATION');assert.equal(s.rows.length,before);});
 test('Backend: poškodená história blokuje zápisy; zámok sa uvoľní',()=>{const s=setup();s.rows[1][1]='broken';assert.equal(s.call({action:'read'}).code,'CORRUPT');assert.equal(set(s,'blocked','demo-1','A').code,'CORRUPT');assert.equal(s.locked,false);});
 test('Backend: vyčerpaný zámok vráti BUSY bez zápisu',()=>{const s=server({busy:true});assert.equal(s.call({action:'read'}).code,'BUSY');assert.equal(s.writes,0);});
+test('Backend 1.1: rozvrh používa serverového vlastníka, validáciu a kontrolu verzie',()=>{
+ const s=setup(),command={op:'schedule.upsert',id:'slot',expected:0,day:1,start:'08:00',end:'08:45',classId:'demo-7a'};
+ const r=s.call({action:'command',requestId:'slot-create',command});assert.equal(r.ok,true);assert.equal(r.actor,'teacher@school.example');assert.equal(r.state.schedule[0].owner,r.actor);
+ assert.equal(s.call({action:'command',requestId:'slot-conflict',command}).code,'CONFLICT');
+ assert.equal(s.call({action:'command',requestId:'slot-spoof',command:{...command,id:'spoof',owner:'other@school.example'}}).code,'VALIDATION');
+ assert.equal(s.call({action:'command',requestId:'slot-overlap',command:{...command,id:'overlap',start:'08:30'}}).code,'VALIDATION');
+ s.identity('other@school.example');assert.equal(s.call({action:'read'}).actor,'other@school.example');
+ assert.equal(s.call({action:'command',requestId:'slot-delete-other',command:{op:'schedule.delete',id:'slot',expected:1}}).code,'VALIDATION');
+ s.identity('teacher@school.example');const deleted=s.call({action:'command',requestId:'slot-delete',command:{op:'schedule.delete',id:'slot',expected:1}});assert.equal(deleted.ok,true);assert.equal(deleted.state.schedule[0].deleted,true);
+});
 test('Backend: generovaný nástroj obnovy zachová celý obsah a odmietne neprázdny cieľ',()=>{
  const os=require('node:os'),{spawnSync}=require('node:child_process'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'phe-restore-'));
  try {

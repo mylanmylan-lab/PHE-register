@@ -32,6 +32,25 @@
     const s = replay ? source : {...clone({...source,events:[]}),events:source.events.slice()}, c = clone(command);
     let cl, lesson, record, open;
     switch(c.op) {
+      case 'schedule.upsert': {
+        fields(c,['op','id','expected','day','start','end','classId']); id(c.id); id(c.classId);
+        check(Number.isInteger(c.day) && c.day>=1 && c.day<=5,'Rozvrh možno nastaviť pre pondelok až piatok.');
+        check(typeof c.start==='string' && typeof c.end==='string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(c.start) && /^([01]\d|2[0-3]):[0-5]\d$/.test(c.end) && c.start<c.end,'Koniec musí byť po začiatku; použite čas HH:MM.');
+        check(s.classes.some(x=>x.id===c.classId),'Vyberte existujúcu triedu.');
+        const entries=s.schedule||[], entry=entries.find(x=>x.id===c.id);
+        if(entry) {check(entry.owner===meta.actor,'Tento rozvrh patrí inému učiteľovi.');version(entry,c.expected);check(!entry.deleted,'Položka rozvrhu bola odstránená.');}
+        else if(c.expected!==0)fail('CONFLICT','Položka rozvrhu už neexistuje. Obnovte údaje.');
+        check(!entries.some(x=>!x.deleted && x.owner===meta.actor && x.day===c.day && x.id!==c.id && c.start<x.end && x.start<c.end),'Hodiny v rozvrhu sa nesmú časovo prekrývať.');
+        const data={id:c.id,owner:meta.actor,day:c.day,start:c.start,end:c.end,classId:c.classId,version:entry?entry.version+1:1,deleted:false};
+        if(entry)Object.assign(entry,data);else entries.push(data);
+        s.schedule=entries;break;
+      }
+      case 'schedule.delete': {
+        fields(c,['op','id','expected']);id(c.id);
+        const entry=(s.schedule||[]).find(x=>x.id===c.id);version(entry,c.expected);
+        check(entry.owner===meta.actor,'Tento rozvrh patrí inému učiteľovi.');check(!entry.deleted,'Položka rozvrhu už bola odstránená.');
+        entry.deleted=true;entry.version++;break;
+      }
       case 'class.create':
         fields(c,['op','id','name','students']); id(c.id); str(c.name,60); students(c.students);
         check(!s.classes.some(x=>x.id===c.id),'Trieda už existuje.'); check(s.classes.length < 50,'Limit 50 tried.');
