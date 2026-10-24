@@ -36,6 +36,16 @@ npm start
 
 `npm install` nie je potrebné na aplikáciu ani základné testy. Ak je port obsadený, použite `python spustit.py --port 4174`; zmena portu znamená samostatné lokálne úložisko.
 
+## Aktualizácia z 1.0 na 1.1 vo Windows
+
+1. V pôvodnej aplikácii otvorte **Údaje → Stiahnuť zálohu** a odložte JSON mimo priečinka aplikácie. Poznačte si adresu z prehliadača.
+2. Zatvorte všetky karty PHE Register a zastavte pôvodný server cez `Ctrl+C`.
+3. Z GitHubu stiahnite verziu 1.1 a rozbaľte celý projekt. Pred zlúčením pull requestu vyberte vetvu `codex/phe-register-smart-schedule-1-1`; po zlúčení použite `main`.
+4. Spustite **Spustit-Windows.cmd** z nového priečinka. Otvorte aplikáciu v rovnakom prehliadači a používateľskom profile na **presne rovnakej adrese a porte** ako doteraz. Napríklad `http://127.0.0.1:4173` a `http://localhost:4173` sú pre úložisko odlišné adresy.
+5. Skontrolujte pôvodné triedy a hodiny. Rozvrh nastavte cez **Nastavenia → Rozvrh → Pridať hodinu**, zadajte začiatok, koniec a triedu a kliknite **Uložiť do rozvrhu**.
+
+Údaje evidencie sú v prehliadači, nie v stiahnutom priečinku ani na GitHube. Verzia 1.1 používa rovnakú databázu a existujúce údaje pri otvorení nemaže ani nenahrádza fiktívnymi. Pri bežnej aktualizácii preto netreba obnovovať zálohu ani vymazávať dáta prehliadača. Ak sa objaví prázdna alebo ukážková evidencia, najprv skontrolujte pôvodnú adresu, port a profil; do novej evidencie zatiaľ nezapisujte. Pri zámernom presune na inú adresu alebo zariadenie použite uloženú JSON zálohu podľa časti **Export a obnova**.
+
 ## Vyskúšanie na iPhone
 
 1. Počítač a iPhone pripojte k rovnakej dôveryhodnej Wi-Fi.

@@ -17,6 +17,12 @@ Spolu **51 automatických testov a 28 úspešných browser scenárov**. Fyzický
 
 Výstupy behov: [automatické testy](../tests/artifacts/unit-results-1.1.txt), [regresné browser testy](../tests/artifacts/browser-results-1.1.txt), [rozvrh v prehliadači](../tests/artifacts/timetable-browser-results.txt). Pôvodné artefakty 1.0 zostali zachované.
 
+## Overenie odovzdania do GitHubu
+
+Pri príprave aktualizácie priamo do `main` boli všetky vyššie uvedené testy opätovne spustené s rovnakým výsledkom. `npm run build`, kontrola syntaxe JavaScriptu, kontrola diffu a `python3 spustit.py --help` prešli. Generovaný `Domain.gs` sa zhoduje s `web/domain.js`; samostatný HTML balík sa zhoduje s Apps Script `Index.html`.
+
+Porovnanie so vzdialenou vetvou potvrdilo zhodu dokončených zdrojov 1.1 pred doplnením návodu na aktualizáciu. Pri kontrole obsahovala vetva `main` iba pôvodný `RAEDME.md`; pripravená vetva má 46 verzovaných súborov vrátane neho, zdrojov aplikácie, testov, dokumentácie a Windows spúšťača. Všetkých 39 súborov pôvodnej vetvy 1.0 zostalo zachovaných. Testy používajú vlastné izolované databázy s fiktívnymi údajmi, nie používateľovu lokálnu evidenciu.
+
 ## Čo sa overilo
 
 - Interval hodiny je `[začiatok, koniec)`: presný začiatok, posledná milisekunda pred koncom, presný koniec, nadväzujúce hodiny bez prestávky.
