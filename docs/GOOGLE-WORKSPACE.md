@@ -6,7 +6,10 @@ Stav: **backend implementovaný, testovaný lokálne so simulovanými Google slu
 
 Migrácia a predbežná záloha sú popísané v [MIGRACIA-1.2.md](MIGRACIA-1.2.md). Nový model je doplnkový: nemení historické udalosti 1.0/1.1, názov databázy ani formát obálky zálohy. Nové udalosti vyžadujú aplikáciu 1.2+.
 
-- Rozvrh dopĺňa `group`, `validFrom`, `validTo`. Vlastník ostáva serverový autor.
+- Rozvrh dopĺňa `group`, `validFrom`, `validTo` a voliteľné `period` (1–9). Vlastník ostáva serverový autor.
+- `schedule.preset` bezpečne doplní 19 prednastavených blokov: kontrola revízie, preskočenie obsadených časov, opätovné použitie tried alebo vytvorenie prázdnych tried. V školskom režime sa vždy spúšťa výslovne z náhľadu, nie automaticky pri prihlásení.
+- `timetable.settings` ukladá časy a konfigurovateľné `startOfDay` pre serverom určeného učiteľa s kontrolou verzie. Predvolené 06:00 sa vyhodnocujú v Europe/Bratislava. Zmena časov aktualizuje naviazaný rozvrh pod rovnakým zámkom; historické dochádzky ostávajú bez zmeny. Obe operácie sú súčasťou zálohy udalostí.
+- `lesson.create` s `openExisting: true` znovu otvorí existujúci vlastný blok bez zápisu ďalšieho riadka, aj keď dve karty pošlú rôzne ID požiadaviek. Pri novom bloku platia všetky pôvodné kontroly revízie, skupiny, rozvrhu a prevzatia. Treba naraz aktualizovať klienta aj `Domain.gs`.
 - Nová hodina má `owner`, `start`, `end`, `slotId`, `group`, `studentIds`, `confirmedAt`, `confirmedBy`. `roster` ostáva snímkou celej triedy; `studentIds` určuje aktuálne zaradenie bez mazania vyradených zápisov. Pole umožní budúce rozšírenie, ale skupiny z viacerých tried nie sú v 1.2 sprístupnené.
 - Téma a ukončenie patria vlastníkovi. Zápis do cudzej hodiny sa odmietne. `lesson.takeover` je výslovné prevzatie s auditom vlastníka; `lesson.group` vyžaduje pri kolízii úplný zoznam `takeovers` a aktuálnu revíziu. Všetky operácie sa vyhodnotia pod rovnakým serverovým zámkom a zapíšu jedinou udalosťou.
 - Kolízia znamená rovnakú triedu, dátum, prekrytie časových intervalov a spoločného žiaka. Odlišné skupiny môžu učiť súčasne dvaja učitelia. Opakovanie rovnakej naplánovanej hodiny toho istého učiteľa sa odmietne. Staré hodiny bez času sa automaticky nespájajú; neznámy čas sa nevymýšľa.
@@ -29,7 +32,7 @@ API v úspešnej odpovedi pridáva serverové pole `actor`, aby klient vybral ro
 
 Zálohy 1.0 sú naďalej čitateľné. Nové zálohy s udalosťami rozvrhu vyžadujú verziu 1.1 alebo novšiu. Obnovovací nástroj zachová aj rozvrhy a ich historických vlastníkov. Lokálny rozvrh má autora „Lokálny učiteľ“; jeho priradenie ku konkrétnemu školskému účtu pri budúcom importe vyžaduje výslovné mapovanie správcom. Automatické prepisovanie vlastníkov nie je implementované.
 
-Posledná manuálna trieda sa pamätá na zariadení; ochrana otvorenej hodiny je viazaná na kartu prehliadača. Tieto dočasné voľby rozhrania sa neposielajú ostatným učiteľom. Údaje hodín ani ich dátumy sa predvýberom rozvrhu nemenia. Reálnu školskú identitu a synchronizáciu treba naďalej overiť podľa akceptačného postupu nižšie.
+Posledná vybraná trieda, skupina a blok sa pamätajú na zariadení; ochrana otvorenej hodiny je viazaná na kartu prehliadača. Tieto voľby rozhrania sa neposielajú ostatným učiteľom. Po poslednej hodine, cez víkend a pred aktiváciou nového dňa zostáva posledný výber. Údaje hodín ani ich dátumy sa predvýberom rozvrhu nemenia. Reálnu školskú identitu a synchronizáciu treba naďalej overiť podľa akceptačného postupu nižšie.
 
 ## Architektúra
 

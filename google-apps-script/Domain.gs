@@ -26,6 +26,21 @@
     if(bytes>15*1024*1024)fail('LIMIT','Údaje prekračujú limit 15 MB obnoviteľnej zálohy. Vytvorte zálohu a kontaktujte správcu.');
   }
   const GROUPS={all:'Celá trieda',boys:'Chlapci',girls:'Dievčatá'};
+  const PERIODS=[['08:00','08:45'],['08:50','09:35'],['09:50','10:35'],['10:50','11:35'],['11:45','12:30'],['12:40','13:25'],['13:30','14:15'],['14:25','15:10'],['15:20','16:05']].map(([start,end],i)=>({number:i+1,start,end}));
+  const WEEK_PRESET=[[[1,'IV.MYP'],[4,'V.MYP'],[6,'V.PYP AJ']],[[1,'II.MYP'],[3,'III.MYP'],[5,'P.MYP'],[6,'I.MYP']],[[1,'III.MYP'],[3,'VI.A'],[4,'V.PYP AJ']],[[1,'V.MYP'],[2,'VI.A'],[5,'P.MYP'],[6,'I.MYP'],[7,'IV.MYP']],[[4,'P.MYP'],[5,'III.MYP'],[6,'II.MYP'],[7,'V.MYP']]].flatMap((rows,i)=>rows.map(([period,name])=>({day:i+1,period,name})));
+  const classKey=name=>name.normalize('NFKC').toLocaleUpperCase('sk').replace(/\s+/g,'');
+  function timetableSettings(s,actor) {return (s.timetableSettings||[]).find(x=>x.owner===actor)||{owner:actor,version:0,startOfDay:'06:00',periods:clone(PERIODS)};}
+  function existingLesson(s,actor,c) {
+    return s.lessons.find(l=>l.owner===actor&&l.classId===c.classId&&l.date===c.date&&((c.slotId&&l.slotId===c.slotId)||(l.start===c.start&&l.end===c.end&&l.group===c.group)));
+  }
+  function presetPreview(s,actor,bindings={}) {
+    const periods=timetableSettings(s,actor).periods;
+    return WEEK_PRESET.map(row=>{
+      const matches=s.classes.filter(c=>classKey(c.name)===classKey(row.name)),cl=bindings[row.name]?s.classes.find(c=>c.id===bindings[row.name]):matches.length===1?matches[0]:null;
+      const period=periods[row.period-1],conflict=(s.schedule||[]).find(e=>!e.deleted&&e.owner===actor&&e.day===row.day&&e.start<period.end&&period.start<e.end);
+      return {...row,...period,period:row.period,classId:cl?.id||null,ambiguous:!bindings[row.name]&&matches.length>1,conflictId:conflict?.id||null};
+    });
+  }
   function group(v) {check(Object.hasOwn(GROUPS,v),'Neplatná skupina.');}
   function hours(start,end) {check(typeof start==='string'&&typeof end==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(start)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(end)&&start<end,'Koniec musí byť po začiatku; použite čas HH:MM.');}
   function roster(l) {return l.studentIds?l.roster.filter(p=>l.studentIds.includes(p.id)):l.roster;}
@@ -79,8 +94,32 @@
     const s = replay ? source : {...clone({...source,events:[]}),events:source.events.slice()}, c = clone(command);
     let cl, lesson, record, open;
     switch(c.op) {
+      case 'timetable.settings': {
+        fields(c,['op','expected','startOfDay','periods']);check(typeof c.startOfDay==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(c.startOfDay),'Neplatný čas začiatku dňa.');
+        check(Array.isArray(c.periods)&&c.periods.length===9,'Zadajte deväť vyučovacích hodín.');
+        c.periods.forEach((p,i)=>{fields(p,['number','start','end']);check(p.number===i+1,'Čísla hodín musia byť 1 až 9.');hours(p.start,p.end);if(i)check(c.periods[i-1].end<=p.start,'Časy vyučovacích hodín sa prekrývajú.');});
+        const old=timetableSettings(s,meta.actor);version(old,c.expected);
+        const entries=s.schedule||[],proposed=entries.map(e=>e.owner===meta.actor&&e.period&&!e.deleted?{...e,start:c.periods[e.period-1].start,end:c.periods[e.period-1].end}:e);
+        for(const e of proposed.filter(e=>e.owner===meta.actor&&!e.deleted))check(!proposed.some(x=>x.id!==e.id&&!x.deleted&&x.owner===meta.actor&&x.day===e.day&&x.start<e.end&&e.start<x.end),'Nové časy kolidujú s vlastnou položkou rozvrhu. Najprv upravte túto položku.');
+        proposed.forEach((e,i)=>{if(e!==entries[i]&&(e.start!==entries[i].start||e.end!==entries[i].end))Object.assign(entries[i],{start:e.start,end:e.end,version:e.version+1});});
+        const list=s.timetableSettings||(s.timetableSettings=[]),entry=list.find(x=>x.owner===meta.actor),data={owner:meta.actor,version:old.version+1,startOfDay:c.startOfDay,periods:c.periods};if(entry)Object.assign(entry,data);else list.push(data);break;
+      }
+      case 'schedule.preset': {
+        fields(c,['op','id','expectedRevision','validFrom','bindings']);id(c.id);check(c.id.length<=60,'Príliš dlhé ID prednastavenia.');date(c.validFrom);revision(s,c.expectedRevision);
+        const bindings=c.bindings||{};obj(bindings);check(Object.keys(bindings).every(k=>WEEK_PRESET.some(r=>r.name===k)),'Neznáma trieda prednastavenia.');
+        Object.values(bindings).forEach(v=>{id(v);check(s.classes.some(x=>x.id===v),'Priradená trieda neexistuje.');});
+        const preview=presetPreview(s,meta.actor,bindings);check(!preview.some(r=>r.ambiguous&&!r.conflictId),'Existuje viac tried s rovnakým názvom. Najprv vyberte priradenie triedy.');
+        const entries=s.schedule||(s.schedule=[]),resolved={...bindings};
+        for(const row of preview.filter(r=>!r.conflictId)){
+          let classId=resolved[row.name]||row.classId;
+          if(!classId){check(s.classes.length<50,'Limit 50 tried.');classId=c.id+'-c'+s.classes.length;id(classId);check(!s.classes.some(x=>x.id===classId),'ID triedy už existuje.');s.classes.push({id:classId,name:row.name,students:[],version:1});}
+          resolved[row.name]=classId;const slotId=c.id+'-s'+row.day+'-'+row.period;check(!entries.some(x=>x.id===slotId),'ID prednastavenia už bolo použité.');
+          entries.push({id:slotId,owner:meta.actor,day:row.day,start:row.start,end:row.end,classId,group:'boys',period:row.period,validFrom:c.validFrom,validTo:null,version:1,deleted:false});
+        }break;
+      }
       case 'schedule.upsert': {
-        fields(c,['op','id','expected','day','start','end','classId','group','validFrom','validTo']); id(c.id); id(c.classId);
+        fields(c,['op','id','expected','day','start','end','classId','group','validFrom','validTo','period']); id(c.id); id(c.classId);
+        if(c.period!==undefined&&c.period!==null){check(Number.isInteger(c.period)&&c.period>=1&&c.period<=9,'Neplatné číslo hodiny.');const p=timetableSettings(s,meta.actor).periods[c.period-1];check(c.start===p.start&&c.end===p.end,'Čas nezodpovedá číslu hodiny; zvoľte Vlastný čas.');}
         if(c.group!==undefined)group(c.group);
         if(c.validFrom!==undefined)date(c.validFrom);
         if(c.validTo!==undefined&&c.validTo!==null){date(c.validTo);check(!c.validFrom||c.validTo>=c.validFrom,'Neplatné obdobie rozvrhu.');}
@@ -93,6 +132,7 @@
         check(!entries.some(x=>!x.deleted && x.owner===meta.actor && x.day===c.day && x.id!==c.id && c.start<x.end && x.start<c.end),'Hodiny v rozvrhu sa nesmú časovo prekrývať.');
         const data={id:c.id,owner:meta.actor,day:c.day,start:c.start,end:c.end,classId:c.classId,version:entry?entry.version+1:1,deleted:false};
         if(c.group!==undefined)data.group=c.group;
+        if(c.period!==undefined)data.period=c.period;
         if(c.validFrom!==undefined)data.validFrom=c.validFrom;
         if(c.validTo!==undefined)data.validTo=c.validTo;
         if(entry)Object.assign(entry,data);else entries.push(data);
@@ -121,7 +161,8 @@
         const data={owner:meta.actor,mode:c.mode,classIds:c.classIds,version:p?p.version+1:1};if(p)Object.assign(p,data);else list.push(data);break;
       }
       case 'lesson.create':
-        fields(c,['op','id','classId','expectedClass','date','topic','group','start','end','slotId','expectedRevision','takeovers']); id(c.id); id(c.classId); date(c.date); str(c.topic,200,true);
+        fields(c,['op','id','classId','expectedClass','date','topic','group','start','end','slotId','expectedRevision','takeovers','openExisting']); id(c.id); id(c.classId); date(c.date); str(c.topic,200,true);
+        if(c.openExisting!==undefined){check(typeof c.openExisting==='boolean','Neplatné otvorenie hodiny.');group(c.group);hours(c.start,c.end);if(c.slotId!==undefined&&c.slotId!==null)id(c.slotId);if(c.openExisting&&!replay&&existingLesson(source,meta.actor,c))return source;}
         cl=s.classes.find(x=>x.id===c.classId); version(cl,c.expectedClass);
         check(!s.lessons.some(x=>x.id===c.id),'Hodina už existuje.');
         check(cl.students.some(x=>x.active),'Najprv pridajte žiakov.');
@@ -222,6 +263,6 @@
     ['Adela','Brezová','girls'],['Barbora','Čerešňová','girls'],['Ema','Dúhová','girls'],['Hana','Hviezdna','girls'],['Laura','Javorová','girls'],['Lea','Lúčová','girls'],['Nina','Makovská','girls'],['Sofia','Oblačná','girls'],['Tamara','Slnečná','girls'],['Zora','Zelená','girls']
   ];
   function demo() { return apply(empty(),{op:'class.create',id:'demo-7a',name:'7. A',students:demoNames.map((x,i)=>({id:'demo-'+(i+1),firstName:x[0],lastName:x[1],group:x[2],active:true}))},{id:'demo-seed',actor:'Fiktívne údaje',at:'2026-09-01T08:00:00.000Z'}); }
-  const api={MARKS,LABELS,GROUPS,roster,collisions,preset,orderedClasses,empty,apply,facts,backup,restore,sorted,today,semester,demo,fail};
+  const api={MARKS,LABELS,GROUPS,PERIODS,WEEK_PRESET,classKey,timetableSettings,presetPreview,existingLesson,roster,collisions,preset,orderedClasses,empty,apply,facts,backup,restore,sorted,today,semester,demo,fail};
   root.PHE=api; if(typeof module!=='undefined' && module.exports) module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

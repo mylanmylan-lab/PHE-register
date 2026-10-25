@@ -2,6 +2,10 @@
 
 ## Nové v 1.2 – dokončené
 
+- Vstupná obrazovka s dátumom, triedou, skupinou a číslom/časom bloku; Zadať/Upraviť dochádzku bez úvodného formulára. História je zbalená samostatne.
+- Upraviteľných deväť časov a 19 prednastavených blokov; bezpečný náhľad doplnenia, opätovné použitie tried, nové triedy bez žiakov.
+- Zachovanie posledného výberu po vyučovaní, večer, po polnoci, cez víkend a bez rozvrhu. Aktivácia nového dňa od konfigurovateľných 06:00 v Bratislave.
+- Výber bloku po zmene dátumu, viac hodín tej istej triedy, mimoriadna hodina a transakčné otvorenie existujúcej dochádzky aj pri súbehu kariet.
 - Predvolená skupina a platnosť osobného rozvrhu, presun dňa a času.
 - Vlastník hodiny, nezávislé témy a potvrdenia učiteľov; spoločný zoznam žiakov.
 - Zmena skupiny a výslovné prevzatie s kontrolou kolízií, zachovaním značiek, tém a otvorených prípadov.
@@ -13,13 +17,13 @@
 - Kompatibilné načítanie údajov 1.0/1.1 a automatický lokálny snímok pred prvým zápisom 1.2.
 - Testovacie mená učiteľov v lokálnych kartách; školská identita ostáva záležitosťou Etapy B.
 
-Výsledok 1.2: **82 automatických testov a 48 scenárov v Chromium**, [protokol](TESTY-1.2.md).
+Aktuálne výsledky: [protokol zjednodušenej dochádzky](TESTY-1.2-DOCHADZKA.md). Pôvodné výsledky 1.2 ostávajú v [staršom protokole](TESTY-1.2.md).
 
 ## Zachované z 1.1
 
 - Nastavenia → Rozvrh: ľubovoľný počet položiek pre pondelok až piatok, začiatok, koniec a existujúca trieda; pridanie, úprava a odstránenie.
 - Predvýber prebiehajúcej alebo nasledujúcej dnešnej triedy, aj počas prestávok, podľa Europe/Bratislava.
-- Trvalé zapamätanie poslednej manuálnej triedy na tomto zariadení; prednosť manuálneho výberu počas otvorenia aplikácie.
+- Trvalé zapamätanie poslednej vybranej triedy na tomto zariadení; prednosť manuálneho výberu. V 1.2 sa pamätá aj automatický výber, skupina a blok.
 - Ochrana rozpracovanej aj historickej hodiny vrátane obnovenia tej istej karty, ochrana neuložených vstupov a prebiehajúceho zápisu.
 - Automatický výber nevytvára hodinu ani nemení historický záznam.
 - Trvalý rozvrh v pôvodnom úložisku, kompletná obnova zo zálohy, staré zálohy 1.0 bez zmeny údajov.

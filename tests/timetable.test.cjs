@@ -18,14 +18,14 @@ test('Rozvrh: pred prvou hodinou a počas prestávky vyberie nasledujúcu dnešn
 test('Rozvrh: bez prestávky sa na presnej hranici vyberie nasledujúca hodina',()=>{
  const s=put(put(setup(),'adj-1',1,'08:00','08:45'),'adj-2',1,'08:45','09:30','class-b');assert.equal(pick(s,'08:45').slot.id,'adj-2');
 });
-test('Rozvrh: po poslednej hodine zachová poslednú manuálnu triedu',()=>{
- assert.equal(pick(scheduled(),'10:00',{currentClassId:'class-b'}).classId,'demo-7a');assert.equal(pick(scheduled(),'23:59').reason,'fallback');
+test('Rozvrh: po poslednej hodine zachová poslednú vybranú triedu',()=>{
+ assert.equal(pick(scheduled(),'10:00',{currentClassId:'class-b'}).classId,'class-b');assert.equal(pick(scheduled(),'23:59').reason,'fallback');
 });
 test('Rozvrh: sobota a nedeľa nevyberajú pondelkovú hodinu',()=>{
- for(const date of ['2026-10-24','2026-10-25']){const s=scheduled();assert.equal(T.candidate(s,actor,at('08:00',date)),null);assert.equal(pick(s,'08:00',{now:at('08:00',date),currentClassId:'class-b'}).classId,'demo-7a');}
+ for(const date of ['2026-10-24','2026-10-25']){const s=scheduled();assert.equal(T.candidate(s,actor,at('08:00',date)),null);assert.equal(pick(s,'08:00',{now:at('08:00',date),currentClassId:'class-b'}).classId,'class-b');}
 });
 test('Rozvrh: prázdny pracovný deň nevyberá rozvrh z iného dňa',()=>{
- assert.equal(pick(scheduled(),'08:00',{now:at('08:00','2026-10-27'),currentClassId:'class-b'}).classId,'demo-7a');
+ assert.equal(pick(scheduled(),'08:00',{now:at('08:00','2026-10-27'),currentClassId:'class-b'}).classId,'class-b');
 });
 test('Rozvrh: čas Bratislavy je nezávislý od časového pásma zariadenia aj letného času',()=>{
  assert.equal(T.clock(new Date('2026-10-26T07:00:00Z')).time,'08:00');assert.equal(T.clock(new Date('2026-06-01T06:00:00Z')).time,'08:00');

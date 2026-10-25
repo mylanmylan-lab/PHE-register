@@ -63,3 +63,18 @@ test('Backend 1.2: neistý výsledok ukončenia nie je úspech, opakovanie je id
  state=send('start',{op:'lesson.create',id:'a',classId:'demo-7a',expectedClass:1,date:'2026-11-02',topic:'',group:'all',start:'08:00',end:'08:45',expectedRevision:state.revision}).state;
  const cmd={op:'lesson.update',id:'a',expected:1,expectedRevision:state.revision,date:'2026-11-02',topic:'Uložená téma',finished:true};s.failFlush();assert.equal(send('finish',cmd).ok,false);const count=s.rows.length;assert.equal(send('finish',cmd).ok,true);assert.equal(s.rows.length,count);assert.equal(s.call({action:'read'}).state.lessons[0].finished,true);
 });
+test('Backend 1.2: prednastavenie a začiatok dňa používajú serverovú identitu a kontrolu konfliktov',()=>{
+ const s=server();s.init();s.seed();const send=(id,command)=>s.call({action:'command',requestId:id,command});let state=s.call({action:'read'}).state;
+ const preset={op:'schedule.preset',id:'school-preset',validFrom:'2026-10-26',expectedRevision:state.revision};
+ let r=send('preset',preset);assert.equal(r.ok,true);assert.equal(r.state.schedule.length,19);assert.equal(r.state.lessons.length,0);assert.ok(r.state.classes.slice(1).every(c=>!c.students.length));assert.ok(r.state.schedule.every(e=>e.owner==='teacher@school.example'));
+ assert.equal(send('stale-preset',{...preset,id:'new-preset'}).code,'CONFLICT');
+ const cfg={op:'timetable.settings',expected:0,startOfDay:'07:00',periods:JSON.parse(JSON.stringify(s.context.PHE.PERIODS))};
+ assert.equal(send('config',cfg).ok,true);const before=s.rows.length;assert.equal(send('stale-config',cfg).code,'CONFLICT');assert.equal(send('bad-config',{...cfg,expected:1,startOfDay:'25:00'}).code,'VALIDATION');assert.equal(send('spoof-config',{...cfg,owner:'other@school.example'}).code,'VALIDATION');assert.equal(s.rows.length,before);
+ s.identity('other@school.example');r=send('other-config',{...cfg,startOfDay:'06:30'});assert.equal(r.ok,true);assert.equal(r.state.timetableSettings.length,2);assert.equal(r.state.timetableSettings[0].startOfDay,'07:00');assert.equal(s.locked,false);
+});
+test('Backend 1.2: otvorenie existujúcej dochádzky s novým ID nepridá zápis ani neprepíše tému',()=>{
+ const s=server();s.init();s.seed();const send=(id,command)=>s.call({action:'command',requestId:id,command});const state=s.call({action:'read'}).state;
+ const cmd={op:'lesson.create',id:'first',classId:'demo-7a',expectedClass:1,date:'2026-10-26',topic:'Pôvodná téma',group:'boys',start:'08:00',end:'08:45',slotId:null,expectedRevision:state.revision,openExisting:true};assert.equal(send('first',cmd).ok,true);const before=s.rows.length;
+ const repeated=send('second',{...cmd,id:'second',topic:'Nezameniť tému'});assert.equal(repeated.ok,true);assert.equal(s.rows.length,before);assert.equal(repeated.state.lessons.length,1);assert.equal(repeated.state.lessons[0].topic,cmd.topic);
+ assert.equal(send('invalid',{...cmd,id:'invalid',slotId:0}).code,'VALIDATION');assert.equal(s.rows.length,before);
+});

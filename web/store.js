@@ -6,7 +6,7 @@
     async init() {
       this.db=await new Promise((resolve,reject)=>{const r=indexedDB.open('phe-register-v1',1); r.onupgradeneeded=()=>r.result.createObjectStore('data'); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); r.onblocked=()=>reject(new Error('Zatvorte ostatné karty aplikácie.'));});
       this.db.onversionchange=()=>this.db.close();
-      const state=await this.transact((state,store)=>{const marker=store.get('upgrade-v1.2-initialized');marker.onsuccess=()=>{if(!marker.result){if(state)store.put(state,'before-v1.2');store.put(true,'upgrade-v1.2-initialized');}};return state || {...PHE.demo(),storageEpoch:uuid()};});this.epoch=state.storageEpoch;return state;
+      const state=await this.transact((state,store)=>{this.fresh=!state;const marker=store.get('upgrade-v1.2-initialized');marker.onsuccess=()=>{if(!marker.result){if(state)store.put(state,'before-v1.2');store.put(true,'upgrade-v1.2-initialized');}};return state || {...PHE.demo(),storageEpoch:uuid()};});this.epoch=state.storageEpoch;return state;
     }
     transact(change) {
       return new Promise((resolve,reject)=>{

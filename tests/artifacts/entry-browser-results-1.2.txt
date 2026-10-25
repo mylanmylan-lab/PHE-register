@@ -1,0 +1,20 @@
+PASS Čistá inštalácia: 19 položiek, 8 prázdnych tried, Chlapci a správny blok bez dochádzky
+PASS Použiť rozvrh obnoví skupinu aj blok po manuálnej zmene v rovnakej triede
+PASS Jedno tlačidlo vytvorí rozpracovanú dochádzku bez úvodného formulára a témy
+PASS Opakované otvorenie toho istého bloku zachová záznam aj počet udalostí
+PASS Rozpracovaná evidencia zostane otvorená cez prestávku aj po obnovení stránky
+PASS Zmena dátumu vyhodnotí vybraný deň; výber konkrétneho bloku nastaví triedu aj skupinu
+PASS Ručná trieda, skupina a číslo hodiny sa použijú bez prepísania rozvrhom
+PASS Dve hodiny rovnakej triedy v jeden deň majú samostatné bloky
+PASS Mimoriadna hodina s vlastným časom sa vytvorí aj opakovane otvorí bez duplicity
+PASS Návrat z upravenej hodiny zachová jej nový dátum a spoločnú skupinu vo výbere
+PASS Spätný zápis a historická hodina zachovajú dátum aj triedu pri zmene dňa
+PASS Koniec vyučovania, večerné otvorenie, polnoc a 05:59 zachovajú posledný výber bez zápisu
+PASS O 06:00 sa aktivuje prvá trieda nového dňa v Bratislave aj na zariadení v New Yorku
+PASS Prestávka ponúkne ďalší blok; manuálny výber vydrží do aktivácie ďalšieho dňa
+PASS Sobota a nedeľa zachovajú výber a nevytvoria dochádzku
+PASS Konfigurácia 07:00 a časy deviatich hodín sa uložia; stará dochádzka sa nezmení
+PASS Úplná obnova zachová prednastavenie, časy, začiatok dňa aj všetky staršie udalosti
+PASS Nový vstup na 320/390 px bez pretečenia a JavaScript chýb
+PASS Aktualizácia nič neprednastaví sama; náhľad doplní len 18 voľných blokov bez duplicitných tried
+PASS Súbeh dvoch kariet rovnakého učiteľa otvorí jedinú dochádzku bez tichej straty

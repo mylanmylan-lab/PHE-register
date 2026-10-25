@@ -1,7 +1,8 @@
 /* Real browser + IndexedDB regression tests. Times are fixed in Europe/Bratislava. */
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const out=path.resolve(process.env.PHE_TEST_ARTIFACTS||path.join(__dirname,'artifacts'));
-fs.mkdirSync(out,{recursive:true});const logs=[],pass=message=>{logs.push('PASS '+message);console.log('PASS '+message);};
+fs.mkdirSync(out,{recursive:true});const {seedLegacy,history}=require('./browser-helpers.cjs');
+const logs=[],pass=message=>{logs.push('PASS '+message);console.log('PASS '+message);};
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.PHE_CHROMIUM?{executablePath:process.env.PHE_CHROMIUM}:{}),args:['--no-sandbox']});
  try {
@@ -11,7 +12,7 @@ fs.mkdirSync(out,{recursive:true});const logs=[],pass=message=>{logs.push('PASS 
   const read=()=>page.evaluate(async()=>{const store=new PHEStore.LocalStore();await store.init();return store.read();});
   const ready=()=>page.waitForSelector('.nav');
   const selected=()=>page.locator('#class-select').inputValue();
-  await clock('07:50');await page.goto(process.env.PHE_TEST_URL||'http://127.0.0.1:4173');await ready();
+  await clock('07:50');await seedLegacy(page);await page.goto(process.env.PHE_TEST_URL||'http://127.0.0.1:4173');await ready();
   await page.evaluate(async()=>{const store=new PHEStore.LocalStore();await store.init();await store.command({op:'class.create',id:'class-b',name:'8. B',students:[{id:'pupil-b',firstName:'Fiktívna',lastName:'Žiačka',group:'girls',active:true}]});});
   await page.locator('[data-action=refresh]').click();await page.locator('.nav [data-view=settings]').click();
   async function add(day,start,end,classId){await page.locator(`[data-schedule-add="${day}"]`).click();await page.locator('#schedule-form [name=start]').fill(start);await page.locator('#schedule-form [name=end]').fill(end);await page.locator('#schedule-form [name=classId]').selectOption(classId);await page.locator('#schedule-form [type=submit]').click();await page.waitForFunction(()=>!document.querySelector('#schedule-form'));}
@@ -28,14 +29,14 @@ fs.mkdirSync(out,{recursive:true});const logs=[],pass=message=>{logs.push('PASS 
   await page.locator('#class-select').selectOption('class-b');await clock('08:15');await page.waitForTimeout(1200);assert.equal(await selected(),'class-b');pass('Manuálny výber zostane zachovaný aj keď práve prebieha iná trieda');
   await page.reload();await ready();assert.equal(await selected(),'demo-7a');await clock('08:45');await page.waitForFunction(()=>document.querySelector('#class-select').value==='class-b');assert.equal((await read()).lessons.length,0);pass('Presný koniec hodiny a prestávka predvyberú ďalšiu triedu bez nového zápisu');
   await page.locator('#class-select').selectOption('demo-7a');await clock('09:10');await page.waitForTimeout(1200);assert.equal(await selected(),'demo-7a');await page.locator('[data-action=use-schedule]').click();assert.equal(await selected(),'class-b');pass('Manuálny výber možno výslovne uvoľniť tlačidlom Použiť rozvrh');
-  await clock('09:45');await page.waitForFunction(()=>document.querySelector('#class-select').value==='demo-7a');await page.reload();await ready();assert.equal(await selected(),'demo-7a');
-  await clock('08:10','2026-10-31');await page.reload();await ready();assert.equal(await selected(),'demo-7a');assert.equal((await read()).lessons.length,0);pass('Po rozvrhu a cez víkend sa obnoví posledná manuálna trieda');
+  await clock('09:45');await page.waitForTimeout(1200);assert.equal(await selected(),'class-b');await page.reload();await ready();assert.equal(await selected(),'class-b');
+  await clock('08:10','2026-10-31');await page.reload();await ready();assert.equal(await selected(),'class-b');assert.equal((await read()).lessons.length,0);pass('Po rozvrhu a cez víkend zostáva posledná vybraná trieda');
   await clock('08:10');await page.reload();await ready();await page.locator('[data-action=new-lesson]').click();await page.waitForSelector('.student-toggle');const activeId=await page.locator('#lesson-select').inputValue();
   await page.locator('#lesson-topic').fill('Rozpracovaná téma');await clock('09:10');await page.waitForTimeout(1200);assert.equal(await selected(),'demo-7a');assert.equal(await page.locator('#lesson-topic').inputValue(),'Rozpracovaná téma');
   await page.locator('#lesson-topic').press('Tab');await page.waitForFunction(()=>document.querySelector('.save').textContent.includes('Uložené'));await page.reload();await ready();assert.equal(await selected(),'demo-7a');assert.equal(await page.locator('#lesson-select').inputValue(),activeId);assert.equal(await page.locator('#lesson-topic').inputValue(),'Rozpracovaná téma');pass('Rozpracovaná hodina a jej text sú chránené pri zmene času aj obnovení stránky');
   await page.locator('[data-action=finish]').click();await page.waitForFunction(()=>document.querySelector('#class-select').value==='class-b');assert.equal(await page.locator('#lesson-select').inputValue(),'');assert.equal((await read()).lessons.length,1);pass('Po ukončení zápisu sa uvoľní automatika a ďalšia hodina sa nevytvorí');
   await page.evaluate(async()=>{const store=new PHEStore.LocalStore();await store.init();await store.command({op:'lesson.create',id:'historic',classId:'demo-7a',expectedClass:1,date:'2026-10-01',topic:'Historická téma'});await store.command({op:'lesson.update',id:'historic',expected:1,date:'2026-10-01',topic:'Historická téma',finished:true});});
-  await page.locator('[data-action=refresh]').click();await page.locator('#class-select').selectOption('demo-7a');await page.locator('#lesson-select').selectOption('historic');const beforeHistory=await read();
+  await page.locator('[data-action=refresh]').click();await page.locator('#class-select').selectOption('demo-7a');await history(page,'historic');const beforeHistory=await read();
   await clock('09:30');await page.waitForTimeout(1200);await page.reload();await ready();assert.equal(await selected(),'demo-7a');assert.equal(await page.locator('#lesson-date').inputValue(),'2026-10-01');assert.equal(await page.locator('#lesson-select').inputValue(),'historic');assert.deepEqual((await read()).events,beforeHistory.events);pass('Otvorená historická hodina zachová triedu, dátum aj históriu po zmene času a reload');
   await page.locator('[data-action=leave-lesson]').click();assert.equal(await selected(),'class-b');pass('Z histórie sa vracia na rozvrh iba výslovným pokynom používateľa');
   await page.locator('.nav [data-view=data]').click();const download=page.waitForEvent('download');await page.locator('[data-action=backup]').click();const file=path.join(out,'timetable-backup.json');await(await download).saveAs(file);const backup=JSON.parse(fs.readFileSync(file));assert.ok(backup.events.some(e=>e.command.op==='schedule.upsert'));assert.ok(backup.events.some(e=>e.command.op==='schedule.delete'));

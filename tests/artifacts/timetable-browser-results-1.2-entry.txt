@@ -1,0 +1,15 @@
+PASS Nastavenia → Rozvrh: pridanie viacerých hodín, úprava, odstránenie a trvalé uloženie
+PASS Prekrývajúce sa hodiny sa neuložia a formulár zachová vstup
+PASS Nastavenia rozvrhu bez vodorovného pretečenia na 320 a 390 px
+PASS Otvorenie aplikácie predvyberie dnešnú triedu bez vytvorenia záznamu
+PASS Manuálny výber zostane zachovaný aj keď práve prebieha iná trieda
+PASS Presný koniec hodiny a prestávka predvyberú ďalšiu triedu bez nového zápisu
+PASS Manuálny výber možno výslovne uvoľniť tlačidlom Použiť rozvrh
+PASS Po rozvrhu a cez víkend zostáva posledná vybraná trieda
+PASS Rozpracovaná hodina a jej text sú chránené pri zmene času aj obnovení stránky
+PASS Po ukončení zápisu sa uvoľní automatika a ďalšia hodina sa nevytvorí
+PASS Otvorená historická hodina zachová triedu, dátum aj históriu po zmene času a reload
+PASS Z histórie sa vracia na rozvrh iba výslovným pokynom používateľa
+PASS Úplná JSON záloha a obnova cez UI zachová rozvrh aj historické zápisy
+PASS Bez JavaScript chýb v scenároch rozvrhu
+PASS Existujúca IndexedDB 1.0 sa otvorí bez migrácie a bez zmeny pôvodných údajov
