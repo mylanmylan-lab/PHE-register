@@ -11,7 +11,8 @@ function server(options={}) {
  const call=r=>JSON.parse(JSON.stringify(context.api(r)));
  return {context,call,init:()=>context.initialize_(),seed:()=>context.seedDemo_(),rows,identity:(a,e=a)=>{active=a;effective=e;},failFlush:()=>flushFail=true,get writes(){return writes;},get locked(){return lockHeld;}};
 }
-function setup(){const s=server();s.init();s.seed();assert.equal(s.call({action:'command',requestId:'lesson-request',command:{op:'lesson.create',id:'lesson-1',classId:'demo-7a',expectedClass:1,date:'2026-10-23',topic:''}}).ok,true);return s;}
+// Existing 1.0 shared lesson fixture; new API writes require 1.2 fields.
+function setup(){const s=server();s.init();s.seed();const state=s.call({action:'read'}).state,next=s.context.PHE.apply(state,{op:'lesson.create',id:'lesson-1',classId:'demo-7a',expectedClass:1,date:'2026-10-23',topic:''},{id:'lesson-request',actor:'teacher@school.example',at:'2026-10-23T08:00:00Z'});s.rows.push([next.revision,JSON.stringify(next.events.at(-1))]);return s;}
 function set(s,id,pupil,status,expected=1){return s.call({action:'command',requestId:id,command:{op:'record.set',lessonId:'lesson-1',studentId:pupil,expected,status}});}
 test('Backend: prázdna, cudzia a nepovolená identita nemôže čítať ani zapisovať',()=>{for(const active of ['','intruder@school.example','teacher@outside.example']){const s=server({active});assert.equal(s.call({action:'read'}).code,'FORBIDDEN');assert.equal(set(s,'r','demo-1','A').code,'FORBIDDEN');assert.equal(s.writes,0);}});
 test('Backend: nasadenie ako vlastník sa pre iného učiteľa odmietne',()=>{const s=server({active:'other@school.example',effective:'teacher@school.example'});assert.equal(s.call({action:'read'}).code,'FORBIDDEN');});
@@ -44,4 +45,21 @@ test('Backend: generovaný nástroj obnovy zachová celý obsah a odmietne nepr�
   const target=server();target.init();vm.runInContext(fs.readFileSync(path.join(dir,'RestoreData.gs'),'utf8'),target.context);target.context.restoreBackupIntoEmpty_();
   assert.deepEqual(target.call({action:'read'}).state.events,backup.events);assert.throws(()=>target.context.restoreBackupIntoEmpty_());
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('Backend 1.2: nové hodiny vyžadujú skupinu; dve identity majú vlastné témy a potvrdenia',()=>{
+ const s=server();s.init();s.seed();let state=s.call({action:'read'}).state;
+ const base={op:'lesson.create',id:'a',classId:'demo-7a',expectedClass:1,date:'2026-11-02',topic:'Chlapci'};
+ assert.equal(s.call({action:'command',requestId:'legacy-new',command:base}).code,'VALIDATION');
+ const send=(id,command)=>s.call({action:'command',requestId:id,command});
+ let r=send('new-a',{...base,group:'boys',start:'08:00',end:'08:45',expectedRevision:state.revision});assert.equal(r.ok,true);state=r.state;
+ s.identity('other@school.example');r=send('new-b',{...base,id:'b',topic:'Dievčatá',group:'girls',start:'08:00',end:'08:45',expectedRevision:state.revision});assert.equal(r.ok,true);state=r.state;
+ assert.equal(send('spoof-a',{op:'record.set',lessonId:'a',studentId:'demo-1',expected:1,status:'A'}).code,'FORBIDDEN');
+ assert.equal(send('overlap',{...base,id:'all',group:'all',start:'08:00',end:'08:45',expectedRevision:state.revision}).code,'OVERLAP');
+ r=send('finish-b',{op:'lesson.update',id:'b',expected:1,expectedRevision:state.revision,date:'2026-11-02',topic:'Téma B',finished:true});assert.equal(r.ok,true);assert.equal(r.state.lessons.find(l=>l.id==='b').confirmedBy,'other@school.example');assert.equal(r.state.lessons.find(l=>l.id==='a').finished,false);
+});
+test('Backend 1.2: neistý výsledok ukončenia nie je úspech, opakovanie je idempotentné',()=>{
+ const s=server();s.init();s.seed();let state=s.call({action:'read'}).state;
+ const send=(id,command)=>s.call({action:'command',requestId:id,command});
+ state=send('start',{op:'lesson.create',id:'a',classId:'demo-7a',expectedClass:1,date:'2026-11-02',topic:'',group:'all',start:'08:00',end:'08:45',expectedRevision:state.revision}).state;
+ const cmd={op:'lesson.update',id:'a',expected:1,expectedRevision:state.revision,date:'2026-11-02',topic:'Uložená téma',finished:true};s.failFlush();assert.equal(send('finish',cmd).ok,false);const count=s.rows.length;assert.equal(send('finish',cmd).ok,true);assert.equal(s.rows.length,count);assert.equal(s.call({action:'read'}).state.lessons[0].finished,true);
 });

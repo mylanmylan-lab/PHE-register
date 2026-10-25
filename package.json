@@ -1,6 +1,6 @@
 {
   "name": "phe-register",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Lokálny prototyp a pripravený Google Apps Script backend",
   "scripts": {
@@ -8,7 +8,8 @@
     "test": "node tools/test.cjs",
     "build": "node tools/build.cjs",
     "test:browser": "node tests/browser.cjs",
-    "test:browser:timetable": "node tests/timetable-browser.cjs"
+    "test:browser:timetable": "node tests/timetable-browser.cjs",
+    "test:browser:workflow": "node tests/workflow-browser.cjs"
   },
   "engines": {
     "node": ">=20"

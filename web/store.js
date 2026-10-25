@@ -2,11 +2,11 @@
   'use strict';
   const uuid=()=>crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);
   class LocalStore {
-    constructor() {this.actor='Lokálny učiteľ';}
+    constructor(actor='Lokálny učiteľ') {this.actor=actor;}
     async init() {
       this.db=await new Promise((resolve,reject)=>{const r=indexedDB.open('phe-register-v1',1); r.onupgradeneeded=()=>r.result.createObjectStore('data'); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); r.onblocked=()=>reject(new Error('Zatvorte ostatné karty aplikácie.'));});
       this.db.onversionchange=()=>this.db.close();
-      const state=await this.transact(state=>state || {...PHE.demo(),storageEpoch:uuid()});this.epoch=state.storageEpoch;return state;
+      const state=await this.transact((state,store)=>{const marker=store.get('upgrade-v1.2-initialized');marker.onsuccess=()=>{if(!marker.result){if(state)store.put(state,'before-v1.2');store.put(true,'upgrade-v1.2-initialized');}};return state || {...PHE.demo(),storageEpoch:uuid()};});this.epoch=state.storageEpoch;return state;
     }
     transact(change) {
       return new Promise((resolve,reject)=>{
@@ -17,7 +17,8 @@
       });
     }
     read() { return new Promise((resolve,reject)=>{const r=this.db.transaction('data').objectStore('data').get('state');r.onsuccess=()=>{this.epoch=r.result.storageEpoch;resolve(r.result);};r.onerror=()=>reject(r.error);}); }
-    command(command, requestId=uuid()) { const epoch=this.epoch;return this.transact(state=>{if(state.storageEpoch!==epoch)PHE.fail('CONFLICT','V inej karte bola obnovená záloha. Obnovte údaje a vyberte zmenu znova.');return PHE.apply(state,command,{id:requestId,at:new Date().toISOString(),actor:'Lokálny učiteľ'});}); }
+    command(command, requestId=uuid()) { const epoch=this.epoch,actor=this.actor;return this.transact(state=>{if(state.storageEpoch!==epoch)PHE.fail('CONFLICT','V inej karte bola obnovená záloha. Obnovte údaje a vyberte zmenu znova.');return PHE.apply(state,command,{id:requestId,at:new Date().toISOString(),actor});}); }
+    upgradeBackup() {return new Promise((resolve,reject)=>{const r=this.db.transaction('data').objectStore('data').get('before-v1.2');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
     async restore(backup,expected,expectedEpoch=this.epoch) {
       const imported=PHE.restore(backup);
       const result=await this.transact((current,store)=>{if(current.revision!==expected||current.storageEpoch!==expectedEpoch) PHE.fail('CONFLICT','Údaje sa zmenili. Zopakujte obnovu z aktuálneho prehľadu.');store.put(current,'before-restore');return {...imported,storageEpoch:uuid()};});this.epoch=result.storageEpoch;return result;

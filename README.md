@@ -1,4 +1,4 @@
-# PHE Register 1.1 – Inteligentný rozvrh
+# PHE Register 1.2 – Rozvrh, skupiny a potvrdenie dochádzky
 
 Funkčný mobilný prototyp evidencie účasti a pripravenosti na PHE. Rozhranie je v slovenčine, bez platených služieb a bez knižníc potrebných na samotný beh. Obsahuje **20 fiktívnych žiakov** v triede 7. A.
 
@@ -36,15 +36,61 @@ npm start
 
 `npm install` nie je potrebné na aplikáciu ani základné testy. Ak je port obsadený, použite `python spustit.py --port 4174`; zmena portu znamená samostatné lokálne úložisko.
 
-## Aktualizácia z 1.0 na 1.1 vo Windows
+## Nové vo verzii 1.2
 
-1. V pôvodnej aplikácii otvorte **Údaje → Stiahnuť zálohu** a odložte JSON mimo priečinka aplikácie. Poznačte si adresu z prehliadača.
-2. Zatvorte všetky karty PHE Register a zastavte pôvodný server cez `Ctrl+C`.
-3. Z GitHubu stiahnite verziu 1.1 a rozbaľte celý projekt. Pred zlúčením pull requestu vyberte vetvu `codex/phe-register-smart-schedule-1-1`; po zlúčení použite `main`.
-4. Spustite **Spustit-Windows.cmd** z nového priečinka. Otvorte aplikáciu v rovnakom prehliadači a používateľskom profile na **presne rovnakej adrese a porte** ako doteraz. Napríklad `http://127.0.0.1:4173` a `http://localhost:4173` sú pre úložisko odlišné adresy.
-5. Skontrolujte pôvodné triedy a hodiny. Rozvrh nastavte cez **Nastavenia → Rozvrh → Pridať hodinu**, zadajte začiatok, koniec a triedu a kliknite **Uložiť do rozvrhu**.
+Triedy a menné zoznamy sú spoločné. Nová hodina patrí konkrétnemu učiteľovi, má vlastnú tému, čas a skupinu **Chlapci / Dievčatá / Celá trieda**. Pôvodné hodiny 1.0/1.1 zostávajú zachované ako spoločné historické záznamy; aplikácia im nevymýšľa čas ani vlastníka.
 
-Údaje evidencie sú v prehliadači, nie v stiahnutom priečinku ani na GitHube. Verzia 1.1 používa rovnakú databázu a existujúce údaje pri otvorení nemaže ani nenahrádza fiktívnymi. Pri bežnej aktualizácii preto netreba obnovovať zálohu ani vymazávať dáta prehliadača. Ak sa objaví prázdna alebo ukážková evidencia, najprv skontrolujte pôvodnú adresu, port a profil; do novej evidencie zatiaľ nezapisujte. Pri zámernom presune na inú adresu alebo zariadenie použite uloženú JSON zálohu podľa časti **Export a obnova**.
+### Rozvrh a predvolená skupina
+
+V **Nastavenia → Rozvrh → Pridať hodinu** zadajte deň, začiatok, koniec, triedu, predvolenú skupinu a dátum platnosti. Koniec platnosti je voliteľný. Cez **Upraviť** možno hodinu presunúť na iný deň alebo čas. Predvýber sa riadi rozvrhom učiteľa a počas prestávky ponúkne ďalšiu dnešnú triedu. Ručný výber, rozpracovaný zápis a historická hodina majú prednosť.
+
+Rozvrh nevytvára dochádzku. **Nová hodina** začne evidenciu zvolenej skupiny. Opätovné otvorenie rovnakej naplánovanej hodiny otvorí existujúci záznam. Viaceré položky tej istej triedy v jeden deň zostávajú samostatnými hodinami. Pri hodine mimo rozvrhu sa predvyplní čas; možno ho v detaile upraviť. Ak už vlastná hodina tento interval obsadzuje, ďalšia sa navrhne za ňou.
+
+### Dvaja učitelia a suplovanie
+
+V lokálnom teste môžete v **Nastavenia → Lokálny testovací učiteľ** zadať napríklad „Fiktívny učiteľ A“ a v druhej karte „Fiktívny učiteľ B“. Každý má vlastný rozvrh, tému a evidenciu, obaja používajú spoločné triedy. Karty musia byť v rovnakom prehliadači a na rovnakej adrese. Meno platí pre príslušnú kartu aj po obnovení stránky. **Toto nie je školské prihlásenie ani synchronizácia medzi počítačmi.** V budúcom školskom režime identitu určí server.
+
+V rozpracovanej hodine kliknite **Upraviť skupinu** a vyberte chlapcov, dievčatá alebo celú triedu. Zmena platí len pre túto hodinu. Ak už žiakov v prekrývajúcom sa čase eviduje iná skupina, zobrazí sa jej učiteľ a téma. Až **Potvrdiť prevzatie evidencie** presunie zaradenie žiakov a zachová ich značky, pôvodnú tému a históriu. Pôvodné záznamy sa nemažú, vyradení žiaci sa v spoločnej matici nezdvoja. Otvorený prípad ! sa prenesie spolu so žiakom. Pri suplovaní celej cudzej hodiny použite **Prevziať hodinu pri suplovaní** a potvrďte náhľad.
+
+Výber žiakov z viacerých tried je budúce rozšírenie; vo verzii 1.2 sa skupina vyberá v rámci jednej triedy. Nové časované hodiny sa automaticky nezlučujú so starými záznamami bez času.
+
+### Potvrdenie dochádzky
+
+- **Naplánovaná:** iba rozvrh, bez dochádzkového záznamu.
+- **Rozpracovaná:** záznam už existuje a každá zmena sa priebežne ukladá, ale celá dochádzka ešte nie je potvrdená. Predvolené ✓ neznamená potvrdenie hodiny.
+- **Ukončená:** kliknutie na **Uložiť a ukončiť hodinu** uloží aktuálnu tému a dátum, overí verziu údajov a potvrdí dochádzku. Až úspešný zápis zobrazí „Dochádzka potvrdená a uložená“. Potom možno aplikáciu zatvoriť.
+
+Po chybe sa úspech nezobrazuje; skontrolujte indikátor, obnovte údaje a potvrďte zápis znova. Pri výpadku školského spojenia mohol server zápis prijať, preto najprv skontrolujte načítaný stav. Ukončenú hodinu môžete cez **Znovu otvoriť** opraviť a opäť potvrdiť; história ostáva zachovaná.
+
+### Prehľad nezaznamenaných hodín
+
+V Hodinách rozbaľte **Prehľad hodín**. Rozpracované záznamy možno otvoriť cez Pokračovať. Minulé naplánované hodiny bez záznamu sú len informačný zoznam podľa aktuálne nastaveného rozvrhu a jeho platnosti, nikdy automatická dochádzka.
+
+V **Nastavenia → Obdobia výučby, prázdniny a voľno** zadajte skutočné obdobia výučby a všetky sviatky, prázdniny a školské voľno ako **Bez výučby**. Voľno má prednosť. Kalendár školy sa neimportuje automaticky; bez jeho nastavenia sú upozornenia na minulé hodiny vypnuté. Prehľad ponúka **Doplniť** alebo **Neuskutočnená**; druhá voľba nevytvára žiadne značky ani dochádzku. Omyl možno opraviť cez **Znova plánovať**. Prehľad štandardne ukazuje posledných 30 dní, najviac 366 dní od zvoleného začiatku. Úprava rozvrhu môže zmeniť tento informačný zoznam, nikdy už uložené hodiny.
+
+### Jednorazové a dlhodobé ospravedlnenia
+
+Jednorazovú značku vyberte pri žiakovi v konkrétnej hodine ako doteraz. Pre obdobie použite **Triedy → Ospravedlnenia a neprítomnosť na obdobie → Pridať obdobie**, alebo tlačidlo **Ed / Ep / – na obdobie** v rozbalenom žiakovi.
+
+Zvoľte žiaka, Ed, Ep alebo – a dátum od. Dátum do platí vrátane; prázdny koniec znamená do odvolania. Cez **Upraviť / ukončiť** doplňte posledný platný dátum. Odstránenie obdobia ruší predvyplnenie; všetky udalosti ostávajú v zálohe. Diagnózy ani lekárske detaily sa nezadávajú.
+
+Obdobia sú spoločné pre žiaka. Predvyplnia nové a ešte nepotvrdené hodiny. **Ručná značka a prevzatý zápis majú prednosť. Potvrdené historické hodnoty sa nemenia**, ani pri opätovnom otvorení hodiny. Historickú opravu urobte výslovne cez značku žiaka. Prekrývajúce sa obdobia jedného žiaka sa odmietnu.
+
+### Triedy a export
+
+Záložka **Triedy** obsahuje kompaktný zoznam všetkých tried. Tlačidlo **Abecedné poradie** obnoví abecedu; šípky ↑/↓ nastavia vlastné poradie, ktoré sa uloží pre učiteľa aj do zálohy. Menné zoznamy sa spravujú ako doteraz.
+
+V **Polrok** zvoľte **Skupina** a prípadne **Učiteľ**. Pri celej triede sa súbežné skupiny s rovnakým dátumom, začiatkom a koncom spoja do jedného stĺpca s oboma témami. Samostatné hodiny s iným časom ostávajú oddelené. Export označí rozpracované a potvrdené stĺpce. Zvolený rozsah platí pre CSV, **Excel XLSX** aj **Tlač / PDF**. Úplná JSON záloha obsahuje všetky skupiny, učiteľov, rozvrhy, ospravedlnenia, kalendár aj históriu bez ohľadu na filter.
+
+## Bezpečná aktualizácia 1.1 → 1.2 vo Windows
+
+1. V pôvodnej aplikácii stiahnite **Údaje → Stiahnuť zálohu** a uložte JSON mimo priečinka aplikácie.
+2. Zatvorte všetky staré karty a zastavte server cez `Ctrl+C`.
+3. Stiahnite celý projekt 1.2. Pred zlúčením PR vyberte na GitHube vetvu `codex/phe-register-v1-2`, po zlúčení `main`.
+4. Spustite **Spustit-Windows.cmd**. Zachovajte rovnaký prehliadač, profil, adresu aj port (štandardne `http://127.0.0.1:4173`). `localhost` a `127.0.0.1` sú odlišné úložiská.
+5. Skontrolujte pôvodné hodiny a triedy. Nevymazávajte dáta prehliadača. Aplikácia používa pôvodnú IndexedDB; pri bežnej aktualizácii sa záloha neobnovuje.
+
+Pred prvým zápisom 1.2 aplikácia uchová samostatný lokálny snímok starého stavu. Stiahnete ho cez **Údaje → Záloha pred prvým otvorením 1.2**. Nenahrádza zálohu mimo prehliadača. Staré zálohy 1.0/1.1 sú čitateľné; zálohy s novými udalosťami vyžadujú verziu 1.2+. Podrobnosti: [migračný postup](docs/MIGRACIA-1.2.md).
 
 ## Vyskúšanie na iPhone
 
@@ -60,7 +106,7 @@ LAN režim slúži iba na test s fiktívnymi údajmi. Server sprístupňuje súb
 
 - **Hodiny:** vyberte triedu, vytvorte novú hodinu, upravte dátum a voliteľnú tému. Dátum sa predvyplní podľa Europe/Bratislava. Aj v jeden deň môžete vytvoriť viac samostatných hodín.
 - **Zoznam žiakov:** chlapci a dievčatá sú samostatne a abecedne podľa priezviska. V zbalenom stave vidíte iba meno a značku. Ťuknutie rozbalí veľké voľby.
-- **Ukončiť hodinu:** zastaví bežné úpravy značiek. Staršiu hodinu vyberte zo zoznamu a kliknite **Znovu otvoriť**. Pôvodné zápisy zostanú v histórii.
+- **Uložiť a ukončiť hodinu:** zastaví bežné úpravy značiek. Staršiu hodinu vyberte zo zoznamu a kliknite **Znovu otvoriť**. Pôvodné zápisy zostanú v histórii.
 - **Prípady:** otvorené ! sú viditeľné naprieč všetkými triedami a po skončení hodiny. Vyriešte ich ako Ep, Ed alebo bez ospravedlnenia. Uzavretie bez ospravedlnenia ponechá značku !, ale odstráni prípad z počtu otvorených. Vyriešené prípady zostávajú v prehľade aj histórii.
 - **Triedy:** vytvorte triedu, doplňte mená a skupinu. Platná úprava sa automaticky uloží po opustení poľa; je dostupné aj tlačidlo Uložiť triedu. Pri novom žiakovi treba doplniť meno aj priezvisko. Tlačidlo − archivuje žiaka, ↶ ho obnoví. Staré hodiny si ponechajú pôvodný zoznam a mená.
 - **Polrok:** tabuľka žiaci × hodiny, s voľbou obdobia. Prvý polrok je september–január, druhý február–august; dátumy možno zmeniť. Kliknutím na dátum otvoríte hodinu. Prázdne pole znamená, že žiak nebol v zozname danej hodiny.
@@ -77,7 +123,7 @@ Triedu môžete vždy vybrať manuálne. Tento výber platí počas aktuálneho 
 
 Otvorenie historickej hodiny pozastaví automatiku: trieda, dátum a téma zostanú zachované, aj pri obnovení tej istej karty. Na automatický výber sa vrátite výslovne cez **Späť na rozvrh**. Rozpracovaná hodina sa pri obnovení tej istej karty tiež zachová. Stav otvorenej karty nie je synchronizovaný medzi zariadeniami.
 
-Lokálny rozvrh sa ukladá v existujúcej IndexedDB a je už zahrnutý v úplnej JSON zálohe. Staré zálohy 1.0 sa načítajú bez rozvrhu a bez zmeny pôvodných údajov. Formát `schema: 1` zostáva zachovaný; pribudli typy udalostí rozvrhu. **Zálohu obsahujúcu rozvrh obnovujte vo verzii 1.1 alebo novšej** – verzia 1.0 nové udalosti nepozná. Pri aktualizácii zachovajte adresu a port lokálneho servera; pred výmenou súborov si vytvorte zálohu a zatvorte staré karty verzie 1.0.
+Lokálny rozvrh sa ukladá v existujúcej IndexedDB a je už zahrnutý v úplnej JSON zálohe. Staré zálohy 1.0 sa načítajú bez rozvrhu a bez zmeny pôvodných údajov. Formát `schema: 1` zostáva zachovaný; nové udalosti verzie 1.2 obnovujte v aplikácii 1.2 alebo novšej. Pri aktualizácii zachovajte adresu a port lokálneho servera; pred výmenou súborov si vytvorte zálohu a zatvorte staré karty verzie 1.0.
 
 V pripravenom Google backend modeli patrí rozvrh jednotlivému školskému účtu. Server určí vlastníka podľa prihlásenia a kontroluje verzie pri úpravách. Lokálny režim používa jedného „Lokálneho učiteľa“. Skutočná školská synchronizácia ostáva predmetom konfigurácie a overenia Etapy B.
 
@@ -124,7 +170,7 @@ Základné testy potrebujú Node.js 20+:
 npm test
 ```
 
-Vo verzii 1.1 prešlo **51 automatických testov**: 19 pôvodnej domény, 19 rozvrhu a 13 backendu so simulovanými službami Google. Prešlo aj 13 pôvodných a 15 nových scenárov v Chromium. Výsledky a hranice overenia: [docs/TESTY-1.1.md](docs/TESTY-1.1.md); pôvodný protokol 1.0 ostáva v [docs/TESTY.md](docs/TESTY.md).
+Vo verzii 1.2 prešlo **82 automatických testov a 48 scenárov v Chromium**. Pôvodné testy zostali zachované. Podrobnosti, výsledky a hranice overenia: [docs/TESTY-1.2.md](docs/TESTY-1.2.md); staršie protokoly ostávajú v dokumentácii.
 
 Voliteľné opakovanie testov prehliadača:
 
@@ -133,7 +179,7 @@ npm install --no-save playwright
 npx playwright install chromium
 ```
 
-V prvom termináli nechajte `npm start`. V druhom spustite `npm run test:browser` a potom `npm run test:browser:timetable`. Inštalácia Playwright je potrebná len pre testovanie, nie pre používateľa aplikácie. Pri vlastnom Chromium nastavte premennú `PHE_CHROMIUM` na cestu k jeho spustiteľnému súboru. Voliteľná premenná `PHE_TEST_ARTIFACTS` určuje priečinok výsledkov, aby opakovanie testov nemuselo prepísať pôvodné ukážky.
+V prvom termináli nechajte `npm start`. V druhom spustite `npm run test:browser` potom `npm run test:browser:timetable` a `npm run test:browser:workflow`. Inštalácia Playwright je potrebná len pre testovanie, nie pre používateľa aplikácie. Pri vlastnom Chromium nastavte premennú `PHE_CHROMIUM` na cestu k jeho spustiteľnému súboru. Voliteľná premenná `PHE_TEST_ARTIFACTS` určuje priečinok výsledkov, aby opakovanie testov nemuselo prepísať pôvodné ukážky.
 
 Testované v Linux Chromium, pri mobilných šírkach 320, 375, 390 a 430 px. **Fyzický iPhone/Safari ani Windows Chrome neboli v tomto prostredí dostupné.** Ich manuálne overenie je v akceptačnom zozname; emulácia šírky ho nenahrádza.
 
@@ -158,4 +204,4 @@ Postup pre správcu: **[docs/GOOGLE-WORKSPACE.md](docs/GOOGLE-WORKSPACE.md)**. J
 | `tools/build.cjs` | Znova vytvorí HTML balík a Apps Script súbory |
 | `tools/prepare-restore.cjs` | Lokálne pripraví administračný skript obnovy do prázdnej tabuľky |
 
-Po úprave zdrojov spustite `npm run build`. Generované `PHE-Register.html`, `google-apps-script/Index.html` a `Domain.gs` neupravujte oddelene. Aplikácia nemá závislosť od EduPage ani rozvrhu.
+Po úprave zdrojov spustite `npm run build`. Generované `PHE-Register.html`, `google-apps-script/Index.html` a `Domain.gs` neupravujte oddelene. Aplikácia nemá závislosť od EduPage ani externého školského rozvrhu.

@@ -1,15 +1,24 @@
 (function(root) {
   'use strict';
   const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
-  function matrix(s,classId,from,to) {
-    const lessons=s.lessons.filter(l=>l.classId===classId && l.date>=from && l.date<=to).sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id));
-    const people=new Map();
-    lessons.forEach(l=>l.roster.forEach(p=>people.set(p.id,p)));
+  function cell(s,column,studentId) {
+    const values=(column.members||[column]).filter(l=>PHE.roster(l).some(p=>p.id===studentId)).map(l=>s.records.find(r=>r.lessonId===l.id&&r.studentId===studentId)?.status).filter(Boolean);
+    return values.length>1?'KONFLIKT: '+values.join(' / '):values[0]||'';
+  }
+  function matrix(s,classId,from,to,options={}) {
+    const group=options.group||'all',teacher=options.teacher||'';
+    const source=s.lessons.filter(l=>l.classId===classId&&l.date>=from&&l.date<=to&&(!teacher||l.owner===teacher)&&PHE.roster(l).some(p=>group==='all'||p.group===group)).sort((a,b)=>a.date.localeCompare(b.date)||(a.start||'').localeCompare(b.start||'')||a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id));
+    const people=new Map(),columns=new Map();
+    source.forEach(l=>{
+      PHE.roster(l).forEach(p=>people.set(p.id,p));
+      const key=group==='all'&&l.owner?l.date+'|'+l.start+'|'+l.end:l.id;
+      if(!columns.has(key))columns.set(key,{...l,members:[]});columns.get(key).members.push(l);
+    });
     (s.classes.find(c=>c.id===classId)?.students||[]).filter(p=>p.active).forEach(p=>people.set(p.id,p));
-    const pupils=['boys','girls'].flatMap(g=>PHE.sorted([...people.values()].filter(p=>p.group===g)));
-    const counts={};
-    const labels=lessons.map(l=>`${l.date} · ${counts[l.date]=(counts[l.date]||0)+1}${l.topic?' · '+l.topic:''}`);
-    const rows=[['Žiak','Skupina',...labels],...pupils.map(p=>[p.lastName+' '+p.firstName,p.group==='boys'?'Chlapci':'Dievčatá',...lessons.map(l=>s.records.find(r=>r.lessonId===l.id&&r.studentId===p.id)?.status||'')])];
+    const pupils=['boys','girls'].flatMap(g=>PHE.sorted([...people.values()].filter(p=>p.group===g&&(group==='all'||group===g))));
+    const lessons=[...columns.values()].map(col=>({...col,topic:col.members.map(l=>[(l.owner?l.owner+' · '+PHE.GROUPS[l.group]+': ':'')+(l.topic||'bez témy'),...(l.transfers||[]).map(t=>t.owner+' (prevzatá téma): '+(t.topic||'bez témy'))].join(' / ')).join(' | '),finished:col.members.every(l=>l.finished)}));
+    const counts={},labels=lessons.map(l=>`${l.date} · ${l.start?l.start+'–'+l.end:counts[l.date]=(counts[l.date]||0)+1} · ${l.finished?'POTVRDENÁ':'ROZPRACOVANÁ'} · ${l.topic}`);
+    const rows=[['Žiak','Skupina',...labels],...pupils.map(p=>[p.lastName+' '+p.firstName,p.group==='boys'?'Chlapci':'Dievčatá',...lessons.map(l=>cell(s,l,p.id))])];
     return {rows,lessons,pupils};
   }
   function csv(rows) {
@@ -46,5 +55,5 @@
     });
   }
   function download(data,name,type) {const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
-  const api={esc,matrix,csv,xlsx,download};root.PHEExport=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={esc,matrix,cell,csv,xlsx,download};root.PHEExport=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

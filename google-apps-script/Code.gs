@@ -1,4 +1,4 @@
-/* PHE Register 1.1 — prepared backend, not deployed.
+/* PHE Register 1.2 — prepared backend, not deployed.
  * Deploy as USER_ACCESSING, domain-only. Never execute as owner.
  * Only api() and doGet() are public. Helpers end in underscore.
  * Sheet Events: one committed event per row; projections are rebuilt in memory.
@@ -58,6 +58,10 @@ function api(request) {
     return locked_(function(){
       var sh=sheet_(user.config),state=stateFromSheet_(sh);
       if(request.action==='read')return {ok:true,state:state,actor:user.email};
+      // Legacy commands remain replayable for old backups, but new server writes
+      // must use the 1.2 ownership/group/duplicate protections.
+      if(request.command&&request.command.op==='lesson.create'&&request.command.group===undefined)PHE.fail('VALIDATION','Novú hodinu vytvorte aktualizovanou aplikáciou 1.2 so skupinou a časom.');
+      if(request.command&&request.command.op==='lesson.update'&&request.command.finished&&typeof request.command.expectedRevision!=='number')PHE.fail('VALIDATION','Potvrdenie dochádzky vyžaduje aktuálny prehľad aplikácie 1.2.');
       var next=PHE.apply(state,request.command,{id:request.requestId,at:new Date().toISOString(),actor:user.email});
       if(next===state)return {ok:true,state:state,actor:user.email}; // retry after uncertain network result
       if(state.events.length>=PHE_MAX_EVENTS_)PHE.fail('LIMIT','Dosiahnutý limit 10 000 zmien prototypu. Vytvorte zálohu a kontaktujte správcu.');
@@ -72,7 +76,7 @@ function api(request) {
       return {ok:true,state:next,actor:user.email};
     });
   } catch(e) {
-    var known=['CONFIG','FORBIDDEN','BUSY','CORRUPT','VALIDATION','CONFLICT','NOT_FOUND','LIMIT','STORAGE'];
+    var known=['CONFIG','FORBIDDEN','BUSY','CORRUPT','VALIDATION','CONFLICT','OVERLAP','NOT_FOUND','LIMIT','STORAGE'];
     return {ok:false,code:known.indexOf(e.code)>=0?e.code:'STORAGE',message:known.indexOf(e.code)>=0?e.message:'Úložisko neodpovedá alebo chýba oprávnenie k tabuľke. Obnovte údaje; zápis už mohol prebehnúť.'};
   }
 }

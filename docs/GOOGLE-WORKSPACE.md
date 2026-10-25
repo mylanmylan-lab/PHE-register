@@ -2,6 +2,23 @@
 
 Stav: **backend implementovaný, testovaný lokálne so simulovanými Google službami; v školskom prostredí nenasadený a integračne neoverený.** Žiadna doména, účet ani Google tabuľka neboli v tejto úlohe pripojené. Nasadenie nasleduje až po schválení školy a konfigurácii.
 
+## Rozšírenie 1.2 – skupiny a potvrdená dochádzka
+
+Migrácia a predbežná záloha sú popísané v [MIGRACIA-1.2.md](MIGRACIA-1.2.md). Nový model je doplnkový: nemení historické udalosti 1.0/1.1, názov databázy ani formát obálky zálohy. Nové udalosti vyžadujú aplikáciu 1.2+.
+
+- Rozvrh dopĺňa `group`, `validFrom`, `validTo`. Vlastník ostáva serverový autor.
+- Nová hodina má `owner`, `start`, `end`, `slotId`, `group`, `studentIds`, `confirmedAt`, `confirmedBy`. `roster` ostáva snímkou celej triedy; `studentIds` určuje aktuálne zaradenie bez mazania vyradených zápisov. Pole umožní budúce rozšírenie, ale skupiny z viacerých tried nie sú v 1.2 sprístupnené.
+- Téma a ukončenie patria vlastníkovi. Zápis do cudzej hodiny sa odmietne. `lesson.takeover` je výslovné prevzatie s auditom vlastníka; `lesson.group` vyžaduje pri kolízii úplný zoznam `takeovers` a aktuálnu revíziu. Všetky operácie sa vyhodnotia pod rovnakým serverovým zámkom a zapíšu jedinou udalosťou.
+- Kolízia znamená rovnakú triedu, dátum, prekrytie časových intervalov a spoločného žiaka. Odlišné skupiny môžu učiť súčasne dvaja učitelia. Opakovanie rovnakej naplánovanej hodiny toho istého učiteľa sa odmietne. Staré hodiny bez času sa automaticky nespájajú; neznámy čas sa nevymýšľa.
+- Pri prevzatí sa zaradenie žiakov odoberie pôvodnej hodine; pôvodné záznamy, téma aj potvrdenie ostávajú v histórii. Značky sa skopírujú s pôvodom `transfer`. Otvorené prípady sa presunú s pôvodným dátumom a odkazom `sourceLessonId`. Spoločný export používa len aktuálne zaradených žiakov a zachová prevzaté témy.
+- Potvrdenie hodiny vyžaduje aktuálnu revíziu celého modelu, aby učiteľ nepotvrdil značky z neaktuálneho prehľadu. Bežné zápisy značiek používajú vlastné verzie záznamov. Pri zmene počas kontroly sa vráti `CONFLICT`; neprebehne tichý prepis.
+- `excuse.upsert/delete` spravujú spoločné obdobia pre žiaka: Ed/Ep/–, od/do alebo otvorený koniec. Bez diagnóz a voľného medicínskeho textu. Prekrývanie sa odmietne. `origin` rozlišuje predvolenú, obdobím určenú, ručnú a prevzatú značku. Zmena obdobia upraví iba automatické hodnoty hodín, ktoré ešte nikdy neboli potvrdené.
+- `preferences.set` ukladá poradie tried učiteľa. `calendar.upsert/delete` uchováva jeho explicitné intervaly výučby a voľna. `occurrence.skip` označí neuskutočnený plán bez záznamov žiakov. Kalendár sviatkov a prázdnin dodáva učiteľ; prehľad chýbajúcich hodín je bez intervalov výučby vypnutý.
+
+Server nové `lesson.create` bez skupiny odmietne. Staré príkazy sa stále smú prehrať pri čítaní histórie a obnove; starý klient teda nemôže pri novom serverovom zápise obísť ochranu skupín. Vstup vlastníka sa neprijíma od klienta. Nový kód, generovaný Domain.gs a Index.html treba pri budúcom nasadení aktualizovať spoločne.
+
+Lokálne testovacie mená učiteľov sú pomôcka na skúšku dvoch kariet jednej IndexedDB, nie autentifikácia. Neukladajú sa k nim heslá. Prenos do školy vyžaduje správcom overené mapovanie lokálnych autorov na školské identity; automatické mapovanie nie je implementované. Overenie reálnych účtov, súbežnosti Google služieb a oprávnení zostáva povinnou úlohou pred nasadením.
+
 ## Rozšírenie 1.1 – osobný rozvrh
 
 Rozvrh používa ten istý hárok `Events`, existujúci zámok a zálohu `schema: 1`. Pribudli príkazy `schedule.upsert` (nová položka s `expected: 0` alebo úprava s aktuálnou verziou) a `schedule.delete`. V pamäti sa z udalostí odvodí voliteľné pole `schedule`; staré dáta ho nepotrebujú a nevykonáva sa deštruktívna migrácia.

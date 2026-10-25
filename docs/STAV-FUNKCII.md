@@ -1,6 +1,21 @@
-# Stav funkcií – prototyp 1.1
+# Stav funkcií – prototyp 1.2
 
-## Nové v 1.1 – dokončené
+## Nové v 1.2 – dokončené
+
+- Predvolená skupina a platnosť osobného rozvrhu, presun dňa a času.
+- Vlastník hodiny, nezávislé témy a potvrdenia učiteľov; spoločný zoznam žiakov.
+- Zmena skupiny a výslovné prevzatie s kontrolou kolízií, zachovaním značiek, tém a otvorených prípadov.
+- Stavy naplánovaná, rozpracovaná a ukončená; overené uloženie a potvrdenie dochádzky.
+- Prehľad rozpracovaných a minulých nezaznamenaných hodín, kalendár výučby/voľna, neuskutočnené hodiny bez dochádzky.
+- Ed/Ep/– na obdobie vrátane otvoreného konca; manuálna značka má prednosť a potvrdená história sa neprepisuje.
+- Kompaktný zoznam tried, abecedné a vlastné poradie učiteľa.
+- Skupinové a spoločné exporty s oboma témami, kompletná záloha nových údajov.
+- Kompatibilné načítanie údajov 1.0/1.1 a automatický lokálny snímok pred prvým zápisom 1.2.
+- Testovacie mená učiteľov v lokálnych kartách; školská identita ostáva záležitosťou Etapy B.
+
+Výsledok 1.2: **82 automatických testov a 48 scenárov v Chromium**, [protokol](TESTY-1.2.md).
+
+## Zachované z 1.1
 
 - Nastavenia → Rozvrh: ľubovoľný počet položiek pre pondelok až piatok, začiatok, koniec a existujúca trieda; pridanie, úprava a odstránenie.
 - Predvýber prebiehajúcej alebo nasledujúcej dnešnej triedy, aj počas prestávok, podľa Europe/Bratislava.
@@ -18,7 +33,7 @@
 | Lokálny prototyp bez Google prihlásenia | Hotový, IndexedDB; otestovaný HTTP server, dodaný samostatný HTML súbor |
 | 20 fiktívnych žiakov | Hotové, trieda 7. A, 10 chlapcov a 10 dievčat |
 | Tvorba a úprava tried a žiakov | Hotové, archivácia bez zmazania histórie |
-| Spoločná evidencia celej triedy | Hotová, dve abecedné skupiny v jednom zázname hodiny |
+| Spoločný zoznam a prehľad celej triedy | Hotové; nové záznamy patria jednotlivým učiteľom/skupinám, staré spoločné hodiny zachované |
 | Mobilný kompaktný zoznam | Hotový, voľby až po kliknutí na meno, automatické zbalenie |
 | Presných 6 značiek a požadované farby | Hotové |
 | A bez automatického ! | Hotové, samostatný doménový aj browser test |
@@ -51,6 +66,10 @@
 | Bezpečná alternatíva pri nedostupnej identite | Technický návrh Cloud Run + IAP; neimplementovaná |
 
 ## Zostáva overiť alebo nie je súčasťou verzie
+
+- Výber žiakov z viacerých tried v jednej skupine.
+- Automatický import školského kalendára; sviatky a prázdniny zadáva učiteľ. Bez období výučby sú upozornenia na minulé plány vypnuté.
+- Automatické rozdelenie a spojenie historických hodín bez času; pôvodné záznamy ostávajú samostatné.
 
 - Reálne školské prihlásenie, oprávnenia, OAuth súhlas, dostupnosť e-mailu a doménové nasadenie Apps Script. **Autentifikácia ešte nie je prevádzkovo overená.**
 - Reálne súbežné požiadavky dvoch školských účtov, výpadky Google služby a výkon pri školskom objeme. Simulované testy nie sú integračný test Google.
