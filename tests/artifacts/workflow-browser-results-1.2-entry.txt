@@ -1,0 +1,20 @@
+PASS Naplánovaná hodina predvyberie skupinu a nevytvorí dochádzku
+PASS Rozpracovaná evidencia obsahuje iba chlapcov a predvyplnené dlhodobé Ed
+PASS Jednorazová značka má prednosť pred obdobím aj po obnove stránky
+PASS Druhý učiteľ má samostatnú skupinu, tému a značky v spoločnej triede
+PASS Opakované otvorenie naplánovanej hodiny nevytvorí duplicitný zápis
+PASS Ukončenie druhej skupiny neukončí rozpracovanú hodinu prvého učiteľa
+PASS Kolízia skupín vyžaduje výslovné potvrdenie a zrušenie nič neprepíše
+PASS Prevzatie celej triedy zachová značky a obe témy bez dvojitej dochádzky
+PASS Zlyhanie ukončenia neoznámi úspech a zachová rozpracovaný text
+PASS Uložiť a ukončiť overí zápis a potvrdí viditeľnú tému aj predvolené značky
+PASS Ukončenú hodinu možno znovu otvoriť a opravy zachovajú históriu
+PASS Spoločný aj skupinový export zachovajú témy; CSV, XLSX a tlač PDF vznikli
+PASS Abecedný zoznam a vlastné poradie tried pretrvajú po reštarte
+PASS Presun hodiny do iného pracovného dňa zachová skupinu
+PASS Minulý plán možno označiť neuskutočnený bez vytvorenia dochádzky
+PASS Spätné doplnenie plánu zachová jeho dátum, skupinu a predvyplnené obdobie
+PASS Úplná obnova zachová skupiny, učiteľov, obdobia, poradie aj potvrdenia
+PASS Nové ovládanie nemá pretečenie na 320/390 px ani chyby JavaScriptu
+PASS Aktualizácia nemení pôvodnú IndexedDB a uchová samostatný snímok pred verziou 1.2
+PASS Manuálny výber inej triedy použije jej vlastnú predvolenú skupinu

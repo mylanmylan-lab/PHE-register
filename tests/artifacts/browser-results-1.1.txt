@@ -1,0 +1,14 @@
+PASS Nová hodina a 20 predvolených značiek ✓
+PASS A bez prípadu, automatické zbalenie a uloženie po obnove
+PASS ! vytvorí prípad; Ep ho vyrieši
+PASS Dve samostatné hodiny v jeden deň
+PASS Ukončenie ponechá prípad; dodatočné uzavretie bez ospravedlnenia
+PASS Skutočné IndexedDB transakcie: konflikt toho istého žiaka a oba zápisy rôznych žiakov
+PASS CSV, XLSX a tlačový PDF export vytvorili súbory
+PASS Úplná záloha a obnova cez používateľské rozhranie
+PASS Obnova v inej karte zneplatní aj staré záznamy s rovnakou verziou
+PASS Vytvorenie triedy, pridanie žiaka a samostatná evidencia
+PASS Mobilná šírka 390 px bez pretečenia a dotykové voľby aspoň 44 px
+PASS Responzívne rozhranie 320, 375 a 430 px
+PASS Bez JavaScript chýb počas scenárov
+SKIP Samostatný HTML cez file://: politika testovacieho prehliadača ERR_BLOCKED_BY_ADMINISTRATOR; tento režim nebol overený.

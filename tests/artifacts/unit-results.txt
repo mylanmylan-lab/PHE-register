@@ -1,0 +1,51 @@
+
+> phe-register@1.0.0 test
+> node tools/test.cjs
+
+✔ Backend: prázdna, cudzia a nepovolená identita nemôže čítať ani zapisovať (7.068693ms)
+✔ Backend: nasadenie ako vlastník sa pre iného učiteľa odmietne (1.132417ms)
+✔ Backend: chýbajúca konfigurácia zlyhá bezpečne (1.160109ms)
+✔ Backend: inicializácia neprepíše údaje a vyžaduje správcu (1.428789ms)
+✔ Backend: server určuje autora a čas; nepovolí podvrhnuté polia (5.816747ms)
+✔ Backend: kolidujúce zápisy sú odmietnuté a rozdielne záznamy zachované (6.692523ms)
+✔ Backend: zlyhanie po zápise a opakovanie ID nevytvorí duplicitnú udalosť (3.040771ms)
+✔ Backend: ! → Ed a história sú uložené v jednom event logu (2.929776ms)
+✔ Backend: neplatná značka, dátum a neznáma operácia nič nezapíšu (2.132968ms)
+✔ Backend: poškodená história blokuje zápisy; zámok sa uvoľní (2.881581ms)
+✔ Backend: vyčerpaný zámok vráti BUSY bez zápisu (0.737229ms)
+✔ Backend: generovaný nástroj obnovy zachová celý obsah a odmietne neprázdny cieľ (45.234545ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85.845797
+✔ 1. Nová hodina: všetkých 20 žiakov je pripravených (2.793002ms)
+✔ 2. A nikdy nevytvorí ! ani otvorený prípad (1.025719ms)
+✔ 3. ! vytvorí otvorený prípad s pôvodným dátumom (0.452685ms)
+✔ 4. ! → Ep vyrieši prípad a zachová pôvodný zápis (0.635276ms)
+✔ 5. Ed nevyhodnocuje úbor (2.134001ms)
+✔ 6. Neprítomnosť deaktivuje úbor aj dôvody necvičenia (0.746823ms)
+✔ 7. Dve hodiny v rovnaký deň majú samostatné záznamy (6.741926ms)
+✔ 8. Spätná úprava zachová históriu a dátum otvoreného prípadu (0.545312ms)
+✔ 9. Súbežná zmena rovnakého záznamu sa odmietne; iný žiak prejde (0.658862ms)
+✔ Uzavretie bez ospravedlnenia odstráni upozornenie, zachová ! (0.433596ms)
+✔ Ukončenie hodiny nezatvorí prípady; vyriešenie funguje aj potom (0.52332ms)
+✔ Oprava ! → A uzavrie prípad opravou; ďalšie A nevytvorí nový (0.511852ms)
+✔ Nový ! po vyriešení vytvorí nový prípad, pôvodný zachová (0.433616ms)
+✔ Záloha sa úplne obnoví vrátane auditnej histórie (0.634325ms)
+✔ Poškodená záloha a neplatné vstupy sa odmietnu (1.015193ms)
+✔ Idempotentné opakovanie nevytvorí duplicitný zápis (0.264735ms)
+✔ Úprava triedy zachová historický zoznam a archivácia platí pre nové hodiny (0.494367ms)
+✔ Polrok cez nový rok a slovenské abecedné poradie (0.112317ms)
+✔ CSV escapuje úvodzovky, oddeľovače a vzorce; XLSX má platnú ZIP hlavičku (0.808125ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25.399368

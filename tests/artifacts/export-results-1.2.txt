@@ -1,0 +1,3 @@
+PASS XLSX: platný ZIP a všetky XML časti, zachované obe témy učiteľov.
+PASS XLSX: nezávislé načítanie openpyxl, 10 dievčat, jedna spoločná hodina, obe témy.
+PASS PDF: skutočný tlačový výstup Chromium, platná hlavička a koniec súboru.

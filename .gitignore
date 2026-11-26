@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+*.pyc
+work/
+RestoreData.gs
+.DS_Store
+
+# Lokálna odovzdávacia kópia a ZIP; zdroje sú v koreni repozitára.
+/output/
+
+/dist/

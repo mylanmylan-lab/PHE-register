@@ -1,0 +1,79 @@
+
+> phe-register@1.1.0 test
+> node tools/test.cjs
+
+✔ Backend: prázdna, cudzia a nepovolená identita nemôže čítať ani zapisovať (3.477723ms)
+✔ Backend: nasadenie ako vlastník sa pre iného učiteľa odmietne (1.119087ms)
+✔ Backend: chýbajúca konfigurácia zlyhá bezpečne (0.769808ms)
+✔ Backend: inicializácia neprepíše údaje a vyžaduje správcu (0.861414ms)
+✔ Backend: server určuje autora a čas; nepovolí podvrhnuté polia (3.544864ms)
+✔ Backend: kolidujúce zápisy sú odmietnuté a rozdielne záznamy zachované (4.271216ms)
+✔ Backend: zlyhanie po zápise a opakovanie ID nevytvorí duplicitnú udalosť (4.961175ms)
+✔ Backend: ! → Ed a história sú uložené v jednom event logu (2.020512ms)
+✔ Backend: neplatná značka, dátum a neznáma operácia nič nezapíšu (1.48965ms)
+✔ Backend: poškodená história blokuje zápisy; zámok sa uvoľní (1.453276ms)
+✔ Backend: vyčerpaný zámok vráti BUSY bez zápisu (0.50346ms)
+✔ Backend 1.1: rozvrh používa serverového vlastníka, validáciu a kontrolu verzie (2.855345ms)
+✔ Backend: generovaný nástroj obnovy zachová celý obsah a odmietne neprázdny cieľ (35.883343ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.588729
+✔ 1. Nová hodina: všetkých 20 žiakov je pripravených (2.650191ms)
+✔ 2. A nikdy nevytvorí ! ani otvorený prípad (1.316062ms)
+✔ 3. ! vytvorí otvorený prípad s pôvodným dátumom (0.39573ms)
+✔ 4. ! → Ep vyrieši prípad a zachová pôvodný zápis (0.618111ms)
+✔ 5. Ed nevyhodnocuje úbor (0.58371ms)
+✔ 6. Neprítomnosť deaktivuje úbor aj dôvody necvičenia (0.51617ms)
+✔ 7. Dve hodiny v rovnaký deň majú samostatné záznamy (5.261562ms)
+✔ 8. Spätná úprava zachová históriu a dátum otvoreného prípadu (0.491242ms)
+✔ 9. Súbežná zmena rovnakého záznamu sa odmietne; iný žiak prejde (0.780623ms)
+✔ Uzavretie bez ospravedlnenia odstráni upozornenie, zachová ! (0.430202ms)
+✔ Ukončenie hodiny nezatvorí prípady; vyriešenie funguje aj potom (0.427056ms)
+✔ Oprava ! → A uzavrie prípad opravou; ďalšie A nevytvorí nový (0.385144ms)
+✔ Nový ! po vyriešení vytvorí nový prípad, pôvodný zachová (0.349771ms)
+✔ Záloha sa úplne obnoví vrátane auditnej histórie (0.59733ms)
+✔ Poškodená záloha a neplatné vstupy sa odmietnu (0.602207ms)
+✔ Idempotentné opakovanie nevytvorí duplicitný zápis (0.237785ms)
+✔ Úprava triedy zachová historický zoznam a archivácia platí pre nové hodiny (0.474647ms)
+✔ Polrok cez nový rok a slovenské abecedné poradie (0.098257ms)
+✔ CSV escapuje úvodzovky, oddeľovače a vzorce; XLSX má platnú ZIP hlavičku (0.773013ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21.528187
+✔ Rozvrh: začiatok je vrátane, koniec sa do hodiny nezahŕňa (3.426727ms)
+✔ Rozvrh: pred prvou hodinou a počas prestávky vyberie nasledujúcu dnešnú triedu (0.74534ms)
+✔ Rozvrh: bez prestávky sa na presnej hranici vyberie nasledujúca hodina (0.397493ms)
+✔ Rozvrh: po poslednej hodine zachová poslednú manuálnu triedu (0.674735ms)
+✔ Rozvrh: sobota a nedeľa nevyberajú pondelkovú hodinu (0.64428ms)
+✔ Rozvrh: prázdny pracovný deň nevyberá rozvrh z iného dňa (0.278385ms)
+✔ Rozvrh: čas Bratislavy je nezávislý od časového pásma zariadenia aj letného času (0.139458ms)
+✔ Rozvrh: manuálny výber blokuje automatiku aj v ďalšej časovej hranici (0.294579ms)
+✔ Rozvrh: rozpracovaná hodina, neuložený vstup a prebiehajúce ukladanie blokujú prepnutie (0.286046ms)
+✔ Rozvrh: historická hodina je chránená aj po ukončení a pri zmene dňa (0.333598ms)
+✔ Rozvrh: výber nikdy nezmení ani nevytvorí evidenčnú hodinu (0.582368ms)
+✔ Rozvrh: používa iba existujúce triedy a rozvrh príslušného učiteľa (0.362911ms)
+✔ Rozvrh: počet položiek za deň nie je viazaný na pevný počet školských hodín (1.089384ms)
+✔ Rozvrh: úprava a odstránenie zachovajú históriu, stará verzia sa odmietne (0.86587ms)
+✔ Rozvrh: odmietne prekrytie, víkend, nesprávny čas a neexistujúcu triedu (0.531963ms)
+✔ Rozvrh: iný učiteľ nemôže meniť ani mazať cudzí záznam (0.33551ms)
+✔ Rozvrh: stará záloha 1.0 sa obnoví bez migrácie alebo zmien údajov (0.874143ms)
+✔ Rozvrh: úplná záloha a obnova obsahujú rozvrh aj odstránené položky (0.439385ms)
+✔ Rozvrh: neexistujúca posledná trieda bezpečne použije dostupnú triedu (0.20824ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16.739329
