@@ -235,3 +235,9 @@ Postup pre správcu: **[docs/GOOGLE-WORKSPACE.md](docs/GOOGLE-WORKSPACE.md)**. J
 | `tools/prepare-restore.cjs` | Lokálne pripraví administračný skript obnovy do prázdnej tabuľky |
 
 Po úprave zdrojov spustite `npm run build`. Generované `PHE-Register.html`, `google-apps-script/Index.html` a `Domain.gs` neupravujte oddelene. Aplikácia nemá závislosť od EduPage ani externého školského rozvrhu.
+
+## Inštalácia na iPhone – PWA pre jeden telefón
+
+Pripravená je inštalovateľná offline aplikácia s ikonami, manifestom a bezpečnou aktualizáciou. Údaje a obnoviteľné JSON zálohy zostávajú lokálne; zariadenia sa nesynchronizujú. PWA sa zostavuje cez `npm run build` do `dist/`. Bežný Windows server a samostatný HTML zostávajú dostupné bez registrácie service workera.
+
+**[Presný postup GitHub Pages, inštalácie, offline skúšky a zálohovania](docs/PWA-IPHONE.md).** Publikovanie vyžaduje ručné spustenie workflow po zlúčení PR; zatiaľ nebolo vykonané. Offline stav a pripomenutie týždennej zálohy sú zobrazené hore v aplikácii.

@@ -7,3 +7,5 @@ RestoreData.gs
 
 # Lokálna odovzdávacia kópia a ZIP; zdroje sú v koreni repozitára.
 /output/
+
+/dist/

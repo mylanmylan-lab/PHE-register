@@ -1,0 +1,144 @@
+
+> phe-register@1.2.0 test
+> node tools/test.cjs
+
+✔ Backend: prázdna, cudzia a nepovolená identita nemôže čítať ani zapisovať (9.711025ms)
+✔ Backend: nasadenie ako vlastník sa pre iného učiteľa odmietne (2.02901ms)
+✔ Backend: chýbajúca konfigurácia zlyhá bezpečne (1.091345ms)
+✔ Backend: inicializácia neprepíše údaje a vyžaduje správcu (1.258034ms)
+✔ Backend: server určuje autora a čas; nepovolí podvrhnuté polia (4.909013ms)
+✔ Backend: kolidujúce zápisy sú odmietnuté a rozdielne záznamy zachované (4.270406ms)
+✔ Backend: zlyhanie po zápise a opakovanie ID nevytvorí duplicitnú udalosť (3.461615ms)
+✔ Backend: ! → Ed a história sú uložené v jednom event logu (4.27969ms)
+✔ Backend: neplatná značka, dátum a neznáma operácia nič nezapíšu (4.028203ms)
+✔ Backend: poškodená história blokuje zápisy; zámok sa uvoľní (3.172972ms)
+✔ Backend: vyčerpaný zámok vráti BUSY bez zápisu (1.289492ms)
+✔ Backend 1.1: rozvrh používa serverového vlastníka, validáciu a kontrolu verzie (7.353554ms)
+✔ Backend: generovaný nástroj obnovy zachová celý obsah a odmietne neprázdny cieľ (46.588922ms)
+✔ Backend 1.2: nové hodiny vyžadujú skupinu; dve identity majú vlastné témy a potvrdenia (6.160848ms)
+✔ Backend 1.2: neistý výsledok ukončenia nie je úspech, opakovanie je idempotentné (4.423565ms)
+✔ Backend 1.2: prednastavenie a začiatok dňa používajú serverovú identitu a kontrolu konfliktov (7.703028ms)
+✔ Backend 1.2: otvorenie existujúcej dochádzky s novým ID nepridá zápis ani neprepíše tému (3.343968ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.270827
+✔ 1. Nová hodina: všetkých 20 žiakov je pripravených (4.425308ms)
+✔ 2. A nikdy nevytvorí ! ani otvorený prípad (1.615089ms)
+✔ 3. ! vytvorí otvorený prípad s pôvodným dátumom (0.891375ms)
+✔ 4. ! → Ep vyrieši prípad a zachová pôvodný zápis (1.734318ms)
+✔ 5. Ed nevyhodnocuje úbor (0.899858ms)
+✔ 6. Neprítomnosť deaktivuje úbor aj dôvody necvičenia (0.713569ms)
+✔ 7. Dve hodiny v rovnaký deň majú samostatné záznamy (17.088615ms)
+✔ 8. Spätná úprava zachová históriu a dátum otvoreného prípadu (1.076793ms)
+✔ 9. Súbežná zmena rovnakého záznamu sa odmietne; iný žiak prejde (1.36192ms)
+✔ Uzavretie bez ospravedlnenia odstráni upozornenie, zachová ! (1.344374ms)
+✔ Ukončenie hodiny nezatvorí prípady; vyriešenie funguje aj potom (1.279516ms)
+✔ Oprava ! → A uzavrie prípad opravou; ďalšie A nevytvorí nový (0.658246ms)
+✔ Nový ! po vyriešení vytvorí nový prípad, pôvodný zachová (0.753428ms)
+✔ Záloha sa úplne obnoví vrátane auditnej histórie (1.28169ms)
+✔ Poškodená záloha a neplatné vstupy sa odmietnu (1.29559ms)
+✔ Idempotentné opakovanie nevytvorí duplicitný zápis (0.411246ms)
+✔ Úprava triedy zachová historický zoznam a archivácia platí pre nové hodiny (1.105856ms)
+✔ Polrok cez nový rok a slovenské abecedné poradie (0.158187ms)
+✔ CSV escapuje úvodzovky, oddeľovače a vzorce; XLSX má platnú ZIP hlavičku (1.263823ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46.04701
+✔ Vstup: presných deväť časov, 19 blokov a osem tried bez žiakov (6.483501ms)
+✔ Vstup: prednastavenie zachová existujúci rozvrh a názvy znovu použije (6.485169ms)
+✔ Vstup: nejednoznačné triedy vyžadujú výslovné priradenie (1.486287ms)
+✔ Vstup: opakované prednastavenie a iný učiteľ nezdvojujú triedy (1.025526ms)
+✔ Vstup: zmena časov upraví iba naviazaný rozvrh, nie existujúcu hodinu (3.034865ms)
+✔ Vstup: chybné časy, začiatok dňa a stará verzia sa odmietnu (1.114699ms)
+✔ Vstup: koniec poslednej hodiny a večer zachová posledný výber (1.987186ms)
+✔ Vstup: polnoc a 05:59 neaktivujú utorkový rozvrh, 06:00 ho aktivuje (0.506368ms)
+✔ Vstup: začiatok dňa je konfigurovateľný a platí v Bratislave aj v lete (0.786879ms)
+✔ Vstup: víkend a prázdny deň zachovajú posledný výber bez zápisu (0.793108ms)
+✔ Vstup: prestávka zvolí ďalší blok, explicitný iný dátum jeho prvý blok (0.516815ms)
+✔ Vstup: manuálny výber platí do aktivácie ďalšieho dňa, zápis je vždy chránený (0.700008ms)
+✔ Vstup: opakované otvorenie a súbeh s neaktuálnou revíziou nepridá udalosť (1.685274ms)
+✔ Vstup: mimoriadna hodina sa znovu otvorí podľa dátumu, skupiny a času (1.471224ms)
+✔ Vstup: rozvrh s viacerými blokmi tej istej triedy zachová samostatné evidencie (1.62887ms)
+✔ Vstup: staré údaje 1.1/1.2 sa z doplnkových nastavení nemenia (1.139767ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.414966
+✔ Rozvrh: začiatok je vrátane, koniec sa do hodiny nezahŕňa (9.311136ms)
+✔ Rozvrh: pred prvou hodinou a počas prestávky vyberie nasledujúcu dnešnú triedu (1.173538ms)
+✔ Rozvrh: bez prestávky sa na presnej hranici vyberie nasledujúca hodina (0.650044ms)
+✔ Rozvrh: po poslednej hodine zachová poslednú vybranú triedu (1.090393ms)
+✔ Rozvrh: sobota a nedeľa nevyberajú pondelkovú hodinu (1.04179ms)
+✔ Rozvrh: prázdny pracovný deň nevyberá rozvrh z iného dňa (0.584826ms)
+✔ Rozvrh: čas Bratislavy je nezávislý od časového pásma zariadenia aj letného času (0.219578ms)
+✔ Rozvrh: manuálny výber blokuje automatiku aj v ďalšej časovej hranici (0.51409ms)
+✔ Rozvrh: rozpracovaná hodina, neuložený vstup a prebiehajúce ukladanie blokujú prepnutie (0.524736ms)
+✔ Rozvrh: historická hodina je chránená aj po ukončení a pri zmene dňa (0.497946ms)
+✔ Rozvrh: výber nikdy nezmení ani nevytvorí evidenčnú hodinu (1.231164ms)
+✔ Rozvrh: používa iba existujúce triedy a rozvrh príslušného učiteľa (0.557315ms)
+✔ Rozvrh: počet položiek za deň nie je viazaný na pevný počet školských hodín (1.567558ms)
+✔ Rozvrh: úprava a odstránenie zachovajú históriu, stará verzia sa odmietne (1.349041ms)
+✔ Rozvrh: odmietne prekrytie, víkend, nesprávny čas a neexistujúcu triedu (1.014971ms)
+✔ Rozvrh: iný učiteľ nemôže meniť ani mazať cudzí záznam (0.86773ms)
+✔ Rozvrh: stará záloha 1.0 sa obnoví bez migrácie alebo zmien údajov (1.125956ms)
+✔ Rozvrh: úplná záloha a obnova obsahujú rozvrh aj odstránené položky (0.691055ms)
+✔ Rozvrh: neexistujúca posledná trieda bezpečne použije dostupnú triedu (0.36041ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31.417338
+✔ 1.2: rozvrh vracia skupinu učiteľa, rešpektuje platnosť a presunutie dňa (5.28728ms)
+✔ 1.2: samostatné skupiny a témy dvoch učiteľov, spoločný zoznam (2.285083ms)
+✔ 1.2: iný učiteľ nesmie meniť tému, značku ani potvrdiť cudziu hodinu (1.181119ms)
+✔ 1.2: celá trieda pri suplovaní bez kolízie nemení rozvrh (1.343142ms)
+✔ 1.2: opakovaný plán ani súbežná prekrývajúca dochádzka sa potichu nevytvorí (0.739568ms)
+✔ 1.2: dve hodiny tej istej triedy v deň zostanú samostatné (0.765246ms)
+✔ 1.2: potvrdené prevzatie zachová značky, témy a audit bez duplicity (1.409411ms)
+✔ 1.2: prevzatý otvorený prípad ostáva otvorený a možno ho vyriešiť (1.389742ms)
+✔ 1.2: prevzatie z inej karty pri novom zápise vyžaduje opakovanú kontrolu (1.092807ms)
+✔ 1.2: výslovné prevzatie celej hodiny mení vlastníka s históriou (1.004845ms)
+✔ 1.2: ukončenie potvrdí predvolené značky, tému aj dátum atomicky (0.755932ms)
+✔ 1.2: zastarané potvrdenie neprehliadne medzičasom zapísanú známku (0.646828ms)
+✔ 1.2: dlhodobé Ed, inkluzívne hranice obdobia a otvorený koniec (2.380115ms)
+✔ 1.2: jednorazová ručná značka má prednosť a neovplyvní ďalšiu hodinu (2.086896ms)
+✔ 1.2: odstránenie obdobia aktualizuje iba nepotvrdené automatické hodnoty (1.847998ms)
+✔ 1.2: opätovné otvorenie historickej dochádzky nepoužije nové predpisy (1.603311ms)
+✔ 1.2: obdobie validuje žiaka, značky, hranice, prekrytie a verziu (1.06807ms)
+✔ 1.2: úprava dátumu rozpracovanej hodiny znovu vyhodnotí predvyplnenie (0.831225ms)
+✔ 1.2: zmena času nesmie vyrobiť kolíziu existujúcich hodín (1.176853ms)
+✔ 1.2: prehľad minulých hodín je iba čítanie a vyžaduje školský kalendár (1.50866ms)
+✔ 1.2: neuskutočnená hodina nevytvorí žiadnu dochádzku (0.515963ms)
+✔ 1.2: zaznamenaná naplánovaná hodina sa neponúka ako nezaznamenaná (0.602101ms)
+✔ 1.2: vlastné a abecedné poradie tried sa zálohuje pre učiteľa (1.622169ms)
+✔ 1.2: spoločný export spojí súbežné skupiny a zachová obe témy (1.301078ms)
+✔ 1.2: export prevzatej skupiny nezdvojí žiakov a zachová pôvodnú tému (2.092644ms)
+✔ 1.2: stará záloha 1.1 a všetky rozšírenia sa obnovia bez straty (2.178523ms)
+✔ 1.2: opätovné prevzatie nevytvorí dva otvorené prípady toho istého zápisu (1.772846ms)
+✔ 1.2: rozvrhový odkaz nemožno podvrhnúť cudzím vlastníkom, dňom ani časom (0.612758ms)
+✔ 1.2: čiastočné prevzatie aktualizuje názov zostávajúcej skupiny (0.94104ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.83378

@@ -10,7 +10,8 @@
     "test:browser": "node tests/browser.cjs",
     "test:browser:timetable": "node tests/timetable-browser.cjs",
     "test:browser:workflow": "node tests/workflow-browser.cjs",
-    "test:browser:entry": "node tests/entry-browser.cjs"
+    "test:browser:entry": "node tests/entry-browser.cjs",
+    "test:browser:pwa": "npm run build && node tests/pwa-browser.cjs"
   },
   "engines": {
     "node": ">=20"
